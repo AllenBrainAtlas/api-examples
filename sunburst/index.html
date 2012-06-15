@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Gene Expression Sunburst</title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="../d3/d3.js"></script>
+    <script type="text/javascript" src="../d3/d3.layout.js"></script>
+	<script type="text/javascript" src="../javascripts/jquery.ie.cors.js"></script>
+	<script type="text/javascript" src="../javascripts/modernizr.svg.js"></script>
+  </head>
+  <body>
+
+	<h1> Gene Expression Sunburst </h1>
+
+	<div id="errorDialog" title="API Query Error"></div>
+
+	<div id="content">
+
+      <div id="chart"></div>    
+
+	  <div id="description">
+		<p> The sunburst chart is useful as an ontology visualization. The center of 
+		  chart corresponds to the root of the ontology, which gets 
+		  subdivided into children moving outward. This sunburst is surrounded
+		  by a radial bar chart depicting the structure expression energy for 
+		  the <a href="http://mouse.brain-map.org/experiment/show/69855739">adora2a gene</a>. </p>
+		<p> Data for this visualization is downloaded dynamically.  
+		  Specifically it accesses the OntologyNode and StructureUnionize 
+		  classes and demonstrates how the results of these queries can be 
+		  manipulated using JavasScript code.</p>
+		<p> The sunburst is generated using the D3 javascript library's partition layout,
+		  which determines the relative width and height of ontology nodes, followed by
+		  a radial layout algoritm.  The scaling of leaves can be uniform or modulated by
+		  z-expression energy. </p>
+		<p> Mouse over structures to see text descriptions.  Click on structure nodes
+		  to see a new plot laid out to show only data for children of the selected
+		  structure.</p>
+
+		<table id="visProperties">
+		  <tr>
+			<td>Structure:</td>
+			<td><div id="structureLabel"></div></td>
+		  </tr>
+
+		  <tr><td class="hrule" colspan=2></td></tr>
+
+		  <tr>
+			<td>Expression Energy:</td> 
+			<td><div id="expressionLabel"></div></td>
+		  </tr>
+
+		  <tr><td class="hrule" colspan=2></td></tr>
+
+		  <tr>
+			<td>Scale By:</td>
+			<td>
+			  <div id="scaleButtons"></div>
+			</td>
+		  </tr>
+		  
+		</table>
+	  </div>
+
+	  <div id="documentation">
+		<h4> Documentation and Resources</h4>
+		
+		<table>
+		  <tr>
+			<td><a href="../doc/sunburst/import.js.html">import.js</a></td>
+			<td>Data importing and parsing documentation.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/sunburst/sunburst.js.html">sunburst.js</a></td>
+			<td>D3 visualization layout documentation.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/sunburst/javascripts/jquery.ie.cors.js.html">jquery.ie.cors.js</a></td>
+			<td>Script enabling cross-origin AJAX requests in IE8 and IE9.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/sunburst/javascripts/modernizr.svg.js.html">modernizr.svg.js</a></td>
+			<td>Script detects if the browser supports SVG.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../sunburst/sunburst.tar.gz">sunburst.tar.gz</a></td>
+			<td>Archived source code.</td>
+		  </tr>
+		</table>
+		<p> <a href="../" id="homeButton">back to examples list</a> </p>
+		<script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+	  </div>
+
+	</div>
+  </body>
+  <script type="text/javascript" src="../sunburst/import.js"></script>
+  <script type="text/javascript" src="../sunburst/sunburst.js"></script>
+</html>

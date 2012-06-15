@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>download_data.py</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>download_data.py</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>This script downloads adult mouse brain coronal gene expression data sets and
+estimates how similar brain structures are according to their expression 
+profile.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">string</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Global variables defining the path to the API and IDs of the ontology, 
+structure graph, product, and plane of sectioning of interest.  This script
+also provides the option of only estimating connections between a specific
+set of structures using the StructureSets table.  Only the <code>TOP_N</code> most 
+correlated connections will be kept, approximately.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>API_PATH = &ldquo;http://api.brain-map.org/api/v2/data&rdquo;</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">API_PATH</span> <span class="o">=</span> <span class="s">&quot;http://ibs-davidf-ux1:3000/api/v2/data&quot;</span>
+<span class="n">GRAPH_ID</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">MOUSE_PRODUCT_ID</span> <span class="o">=</span> <span class="mi">1</span> <span class="c"># aba</span>
+<span class="n">PLANE_ID</span> <span class="o">=</span> <span class="mi">1</span> <span class="c"># coronal</span>
+<span class="n">TOP_N</span> <span class="o">=</span> <span class="mi">2000</span>
+
+<span class="n">DATA_SET_QUERY_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/SectionDataSet/query.json&quot;</span> <span class="o">+</span>\
+                          <span class="s">&quot;?criteria=[failed$eq&#39;false&#39;][expression$eq&#39;true&#39;]&quot;</span> <span class="o">+</span>\
+                          <span class="s">&quot;,products[id$eq</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">+</span>\
+                          <span class="s">&quot;,plane_of_section[id$eq</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">)</span> \
+                          <span class="o">%</span> <span class="p">(</span><span class="n">API_PATH</span><span class="p">,</span> <span class="n">MOUSE_PRODUCT_ID</span><span class="p">,</span> <span class="n">PLANE_ID</span><span class="p">)</span>
+
+<span class="n">UNIONIZE_FMT</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/StructureUnionize/query.json&quot;</span> <span class="o">+</span>\
+    <span class="s">&quot;?criteria=[section_data_set_id$eq</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">+</span>\
+    <span class="s">&quot;&amp;include=section_data_set(products[id$eq</span><span class="si">%d</span><span class="s">])&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">MOUSE_PRODUCT_ID</span><span class="p">)</span>
+
+<span class="n">STRUCTURES_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/Structure/query.json?&quot;</span> <span class="o">+</span>\
+                      <span class="s">&quot;criteria=[graph_id$eq</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">)</span> \
+                      <span class="o">%</span> <span class="p">(</span><span class="n">API_PATH</span><span class="p">,</span> <span class="n">GRAPH_ID</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Make a query to the API via a URL.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">QueryAPI</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="n">start_row</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_rows</span> <span class="o">=</span> <span class="mi">2000</span>
+    <span class="n">total_rows</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>The ontology has to be downloaded in pages, since the API will not return
+more than 2000 rows at once.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">pagedUrl</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s">&#39;&amp;start_row=</span><span class="si">%d</span><span class="s">&amp;num_rows=</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">start_row</span><span class="p">,</span><span class="n">num_rows</span><span class="p">)</span>
+
+        <span class="k">print</span> <span class="n">pagedUrl</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">pagedUrl</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">total_rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total_rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;total_rows&#39;</span><span class="p">])</span>
+
+        <span class="n">start_row</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">start_row</span> <span class="o">&gt;=</span> <span class="n">total_rows</span><span class="p">:</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="n">rows</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Download the first <code>n</code> data sets.  For negative <code>n</code> , download them all.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadDataSets</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">dataSets</span> <span class="o">=</span> <span class="n">QueryAPI</span><span class="p">(</span><span class="n">DATA_SET_QUERY_URL</span><span class="p">)</span>
+  
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataSets</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataSets</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dataSets</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Download the mouse brain structures in a structure graph.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadStructures</span><span class="p">():</span>
+    <span class="n">structs</span> <span class="o">=</span> <span class="n">QueryAPI</span><span class="p">(</span><span class="n">STRUCTURES_URL</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Build a dict from structure id to structure and identify each node&rsquo;s 
+direct descendants.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">structHash</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">structs</span><span class="p">:</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;num_children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">sid</span><span class="p">)</span> <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">sid</span> <span class="o">!=</span> <span class="s">&#39;&#39;</span><span class="p">]</span>
+        <span class="n">structHash</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">s</span> 
+
+    <span class="k">for</span> <span class="n">sid</span><span class="p">,</span><span class="n">s</span> <span class="ow">in</span> <span class="n">structHash</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">parentId</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">structHash</span><span class="p">[</span><span class="n">parentId</span><span class="p">][</span><span class="s">&#39;num_children&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>pull out the structure ids for structures in this structure graph that
+have no children (i.e. just the leaves)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">corrStructIds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sid</span> <span class="k">for</span> <span class="n">sid</span><span class="p">,</span><span class="n">s</span> <span class="ow">in</span> <span class="n">structHash</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s">&#39;num_children&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">corrStructIds</span><span class="p">),</span> <span class="n">structHash</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Download expression data from the StructureUnionize table.  This table is 
+accessed one probe/data set at a time, retrieving all of the expression levels 
+for structures showing expression for that probe. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadExpression</span><span class="p">(</span><span class="n">dataSets</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">QueryAPI</span><span class="p">(</span><span class="n">UNIONIZE_FMT</span> <span class="o">%</span> <span class="p">(</span><span class="n">API_PATH</span><span class="p">,</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dataSets</span><span class="p">]</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Download all of the probes, structures, and expression data for the adult mouse
+brain and transform it into useful data structures. Then compute 
+structure-to-structure expression correlation for all structures.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadAndCorrelateData</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">dataSets</span> <span class="o">=</span> <span class="n">DownloadDataSets</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">structureIds</span><span class="p">,</span> <span class="n">structHash</span> <span class="o">=</span> <span class="n">DownloadStructures</span><span class="p">()</span>
+    <span class="n">unionizes</span> <span class="o">=</span> <span class="n">DownloadExpression</span><span class="p">(</span><span class="n">dataSets</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>Each structure will have an expression vector.  This vector will be as long
+as the number of requested structures.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">nstructs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">structureIds</span><span class="p">)</span>
+    <span class="n">ndata</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataSets</span><span class="p">)</span>
+
+    <span class="n">sidHash</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="nb">id</span><span class="p">,</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="nb">id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">structureIds</span><span class="p">)])</span>
+    <span class="n">didHash</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">],</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataSets</span><span class="p">)])</span>
+    
+    <span class="n">expression</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">nstructs</span><span class="p">,</span><span class="n">ndata</span><span class="p">])</span>
+    <span class="n">expression</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>For each data set&rsquo;s set of unionizes, then for each individual structure,
+fill in the structure&rsquo;s expression vector.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">us</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unionizes</span><span class="p">):</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>for each unionize </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">us</span><span class="p">):</span>
+            <span class="n">sid</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="s">&#39;structure_id&#39;</span><span class="p">]</span>
+            <span class="n">did</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="s">&#39;section_data_set_id&#39;</span><span class="p">]</span>
+
+            <span class="n">struct</span> <span class="o">=</span> <span class="n">structHash</span><span class="p">[</span><span class="n">sid</span><span class="p">]</span>
+            <span class="n">struct</span><span class="p">[</span><span class="s">&#39;volume&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="s">&#39;sum_pixels&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">sidHash</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">sid</span><span class="p">)</span> <span class="ow">and</span> <span class="n">didHash</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">did</span><span class="p">):</span>
+                <span class="n">expression</span><span class="p">[</span><span class="n">sidHash</span><span class="p">[</span><span class="n">sid</span><span class="p">]][</span><span class="n">didHash</span><span class="p">[</span><span class="n">did</span><span class="p">]]</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="s">&#39;expression_energy&#39;</span><span class="p">]</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>numpy has a masked_array data structure that performs computations while
+filtering out values you don&rsquo;t care about.  In this case, we don&rsquo;t want 
+the correlation computation to use NaN&rsquo;s, which indicate that no 
+expression was measured for a structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">mdat</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span><span class="n">numpy</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">expression</span><span class="p">))</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">mdat</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">corr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">structureIds</span><span class="p">,</span> <span class="n">structHash</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Given a structures-by-probes correlation matrix and an array of structures,
+figure out which structures are the most correlated to each other.  Return
+these as an array of {source,target,correlation} hashes.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">EstimateConnections</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span><span class="n">structIds</span><span class="p">):</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Identify a threshold that will pull out approximately <code>TOP_N</code> values. 
+First, mask out NaNs and redundant lower diagonal elements, then sort
+the values into a 1D array without masked elements.  The threshold will
+be picked as the value of the (length &ndash; TOP_N)&lsquo;th element.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">mcorr</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span><span class="n">numpy</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span> <span class="o">|</span> <span class="n">numpy</span><span class="o">.</span><span class="n">tril</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)))</span>
+    <span class="n">corrsort</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">mcorr</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">endwith</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">compressed</span><span class="p">()</span>
+
+    <span class="n">ncorr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">corrsort</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">ncorr</span><span class="o">-</span><span class="n">TOP_N</span> <span class="k">if</span> <span class="n">ncorr</span> <span class="o">&gt;</span> <span class="n">TOP_N</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">threshold</span> <span class="o">=</span> <span class="n">corrsort</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="n">connections</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nstructs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">structIds</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">nstructs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">nstructs</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">connections</span><span class="o">.</span><span class="n">append</span><span class="p">({</span> <span class="s">&#39;source&#39;</span><span class="p">:</span> <span class="n">structIds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> 
+                                     <span class="s">&#39;target&#39;</span><span class="p">:</span>  <span class="n">structIds</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> 
+                                     <span class="s">&#39;corr&#39;</span> <span class="p">:</span> <span class="n">corr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">connections</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Handle command line arguments. Usage is:
+<code>download_data.py &lt;prefix&gt;.json &lt;nprobes&gt;</code></p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">nargs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+<span class="n">fname</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">nargs</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s">&quot;out.json&quot;</span>
+<span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="n">nargs</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">0</span>
+
+<span class="n">base</span><span class="p">,</span><span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+
+<span class="n">structfile</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="s">&quot;.structures&quot;</span> <span class="o">+</span> <span class="n">ext</span>
+<span class="n">connfile</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="s">&quot;.connections&quot;</span> <span class="o">+</span> <span class="n">ext</span>
+<span class="n">corrfile</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="s">&quot;.correlations&quot;</span> <span class="o">+</span> <span class="n">ext</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>Download the data, compute the structure-structure correlation matrix, then
+identify the most correlated pairs of structures.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">corr</span><span class="p">,</span><span class="n">structIds</span><span class="p">,</span><span class="n">structHash</span> <span class="o">=</span> <span class="n">DownloadAndCorrelateData</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">conns</span> <span class="o">=</span> <span class="n">EstimateConnections</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span><span class="n">structIds</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>Write out the connections, structures, and correlation matrix as JSON.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s">&quot;.json&quot;</span><span class="p">:</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">connfile</span><span class="p">,</span><span class="s">&quot;w&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">conns</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">structfile</span><span class="p">,</span><span class="s">&quot;w&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">structHash</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">corrfile</span><span class="p">,</span><span class="s">&quot;w&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">corr</span><span class="p">])))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">print</span> <span class="s">&quot;output file: &quot;</span> <span class="o">+</span> <span class="n">fname</span> <span class="o">+</span> <span class="s">&quot; must be .json&quot;</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

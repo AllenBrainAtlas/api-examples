@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>sample_anatomy_toolbox_demo.m</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="download_expression.m.html">download_expression.m</a>
+          <a class="source" href="download_probe.m.html">download_probe.m</a>
+          <a class="source" href="download_specimen.m.html">download_specimen.m</a>
+          <a class="source" href="get_api_path.m.html">get_api_path.m</a>
+          <a class="source" href="parse_json.m.html">parse_json.m</a>
+          <a class="source" href="sample_anatomy_toolbox_demo.m.html">sample_anatomy_toolbox_demo.m</a>
+          <a class="source" href="transform_samples.m.html">transform_samples.m</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>sample_anatomy_toolbox_demo.m</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>The <a href="http://www.fz-juelich.de/inm/inm-1/DE/Forschung/_docs/SPMAnatomyToolbox/SPMAnatomyToolbox_node.html">SPM Anatomy
+Toolbox</a>
+has probabilistic maps of Brodmann areas.  This code extracts the sample
+expression values for a single probe and then exports the sample
+locations in a format that can be read into the toolbox.  This is a PDYN
+probe, which you can see by inspecting the <code>probe</code> variable below.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">specimen_name</span> <span class="p">=</span> <span class="s">&#39;H0351.2001&#39;</span><span class="p">;</span>
+<span class="n">probe_name</span> <span class="p">=</span> <span class="s">&#39;A_23_P40262&#39;</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Download the specimen and probe expression values.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">probe</span> <span class="p">=</span> <span class="n">download_probe</span><span class="p">(</span><span class="n">probe_name</span><span class="p">);</span>
+<span class="n">specimen</span> <span class="p">=</span> <span class="n">download_specimen</span><span class="p">(</span><span class="n">specimen_name</span><span class="p">);</span> 
+<span class="p">[</span><span class="n">samples</span><span class="p">,</span> <span class="n">explevels</span><span class="p">]</span> <span class="p">=</span> <span class="n">download_expression</span><span class="p">(</span><span class="n">probe</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="n">specimen</span><span class="p">.</span><span class="n">donor_id</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Use the batch cytoarchitectonic probabilities
+tool to read in the <code>human_ma_samples_MNI.txt</code> file generated below.
+Note: the transform from microarray sample locations to MNI space was
+computed using simple affine registration.  As a result, anatomical
+labels of fine structures produced by the Anatomy Toolbox may not be
+completely accurate.  More advanced registration of human brain specimen
+to MNI coordinates is recommended for accurate analysis.  </p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nb">disp</span><span class="p">(</span><span class="s">&#39;Exporting sample coordinates to human_ma_samples_MNI.txt&#39;</span><span class="p">);</span>
+<span class="n">coords</span> <span class="p">=</span> <span class="n">transform_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span><span class="n">specimen</span><span class="p">.</span><span class="n">alignment3d</span><span class="p">)</span><span class="o">&#39;</span><span class="p">;</span>
+<span class="n">save</span> <span class="n">human_ma_samples_MNI</span><span class="p">.</span><span class="n">txt</span> <span class="n">coords</span> <span class="o">-</span><span class="n">ascii</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

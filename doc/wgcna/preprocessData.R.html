@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>preprocessData.R</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="api.R.html">api.R</a>
+          <a class="source" href="human_ma_demo.R.html">human_ma_demo.R</a>
+          <a class="source" href="preprocessData.R.html">preprocessData.R</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>preprocessData.R</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>Read the CSV data files for a human microarray donor (accessible here: [http://human.brain-map.org/static/download]).
+Then run through the list of probes and remove those that have no entrez ID and 
+use the <code>collapseRows</code> WGCNA function to pick a single probe per gene.  Also download
+some supplementary sample metadata useful for visualization.  Finally save the result
+to an R object file.  The following will preprocess the 9861 donor microarray data,
+assuming 9861.zip has been unarchived into a directory called <code>9861</code>.</p>
+
+<pre><code>library(WGCNA)
+library(RJSONIO)
+source(&ldquo;preprocessData.R&rdquo;)
+source(&ldquo;api.R&rdquo;)
+preprocessData(&ldquo;9861&rdquo;,&ldquo;9861.RData&rdquo;)
+</code></pre>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>preprocessData <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>donorDir<span class="p">,</span>outputFileName<span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Load in the data for one of the donors.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  datExpr <span class="o">&lt;-</span> read.csv<span class="p">(</span>sprintf<span class="p">(</span><span class="s">&quot;%s/MicroarrayExpression.csv&quot;</span><span class="p">,</span>donorDir<span class="p">),</span>header<span class="o">=</span><span class="kc">FALSE</span><span class="p">,</span>row.names<span class="o">=</span><span class="m">1</span><span class="p">)</span>
+  probeInfo <span class="o">&lt;-</span> read.csv<span class="p">(</span>sprintf<span class="p">(</span><span class="s">&quot;%s/Probes.csv&quot;</span><span class="p">,</span>donorDir<span class="p">),</span>header<span class="o">=</span><span class="kc">TRUE</span><span class="p">)</span>
+  sampleInfo <span class="o">&lt;-</span> read.csv<span class="p">(</span>sprintf<span class="p">(</span><span class="s">&quot;%s/SampleAnnot.csv&quot;</span><span class="p">,</span>donorDir<span class="p">),</span>header<span class="o">=</span><span class="kc">TRUE</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Filter the data.  Remove probes that have no entrez id.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  validProbes <span class="o">=</span> which<span class="p">(</span>probeInfo<span class="p">$</span>entrez_id<span class="o">&gt;=</span><span class="m">0</span><span class="p">,</span>arr.ind<span class="o">=</span><span class="kc">TRUE</span><span class="p">)</span>
+  datExpr <span class="o">&lt;-</span> datExpr<span class="p">[</span>validProbes<span class="p">,]</span>
+  probeInfo <span class="o">&lt;-</span> probeInfo<span class="p">[</span>validProbes<span class="p">,]</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Some genes have more than one probe.  The <code>collapseRows</code> function chooses
+a single probe to represent a gene.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  probeNames <span class="o">=</span> probeInfo<span class="p">[</span>which<span class="p">(</span>probeInfo <span class="o">==</span> rownames<span class="p">(</span>datExpr<span class="p">)),</span><span class="s">&quot;gene_symbol&quot;</span><span class="p">]</span>
+  probeIDs <span class="o">=</span> rownames<span class="p">(</span>datExpr<span class="p">)</span>
+  datCollapsed <span class="o">=</span> collapseRows<span class="p">(</span>datExpr<span class="p">,</span> probeNames<span class="p">,</span> probeIDs<span class="p">)</span>
+
+  datExpr <span class="o">&lt;-</span> datCollapsed<span class="p">$</span>datETcollapsed
+  probeInfo <span class="o">&lt;-</span> probeInfo<span class="p">[</span>which<span class="p">(</span>datCollapsed<span class="p">$</span>selectedRow <span class="o">==</span> <span class="kc">TRUE</span><span class="p">,</span>arr.ind<span class="o">=</span><span class="kc">TRUE</span><span class="p">),]</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>The API provides structure colors and sort order for visualization purposes.  Download
+those value and append them to the sampleInfo data frame.  </p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  sampleInfo <span class="o">&lt;-</span> downloadSampleProperties<span class="p">(</span>sampleInfo<span class="p">)</span>
+
+  save<span class="p">(</span>datExpr<span class="p">,</span>probeInfo<span class="p">,</span>sampleInfo<span class="p">,</span>file<span class="o">=</span>outputFileName<span class="p">)</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>MainWindow.cxx</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="MainWindow.cxx.html">MainWindow.cxx</a>
+          <a class="source" href="MainWindow.h.html">MainWindow.h</a>
+          <a class="source" href="main.cxx.html">main.cxx</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>MainWindow.cxx</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#include &quot;ui_MainWindow.h&quot;</span>
+<span class="cp">#include &quot;MainWindow.h&quot;</span>
+
+<span class="cp">#include &lt;vtkColorTransferFunction.h&gt;</span>
+<span class="cp">#include &lt;vtkContourFilter.h&gt; </span>
+<span class="cp">#include &lt;vtkDataArray.h&gt;</span>
+<span class="cp">#include &lt;vtkDataSetMapper.h&gt;</span>
+<span class="cp">#include &lt;vtkElevationFilter.h&gt;</span>
+<span class="cp">#include &lt;vtkFloatArray.h&gt;</span>
+<span class="cp">#include &lt;vtkImageActor.h&gt;</span>
+<span class="cp">#include &lt;vtkImageData.h&gt;</span>
+<span class="cp">#include &lt;vtkImageViewer2.h&gt;</span>
+<span class="cp">#include &lt;vtkMetaImageReader.h&gt;</span>
+<span class="cp">#include &lt;vtkPiecewiseFunction.h&gt;</span>
+<span class="cp">#include &lt;vtkPointData.h&gt;</span>
+<span class="cp">#include &lt;vtkProperty.h&gt;</span>
+<span class="cp">#include &lt;vtkQtTableView.h&gt;</span>
+<span class="cp">#include &lt;vtkRenderer.h&gt;</span>
+<span class="cp">#include &lt;vtkRendererCollection.h&gt;</span>
+<span class="cp">#include &lt;vtkRenderWindow.h&gt;</span>
+<span class="cp">#include &lt;vtkSmartPointer.h&gt;</span>
+<span class="cp">#include &lt;vtkSmartVolumeMapper.h&gt;</span>
+<span class="cp">#include &lt;vtkVolumeProperty.h&gt;</span>
+
+<span class="cp">#include &lt;QByteArray&gt;</span>
+<span class="cp">#include &lt;QFileDialog&gt;</span>
+<span class="cp">#include &lt;QInputDialog&gt;</span>
+<span class="cp">#include &lt;QMessageBox&gt;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>Default values for setting up the transfer functions.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">const</span> <span class="kt">float</span> <span class="n">DEFAULT_SLICE_ENERGY_LEVEL</span> <span class="o">=</span> <span class="mf">10.0f</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">float</span> <span class="n">DEFAULT_SLICE_ENERGY_WINDOW</span> <span class="o">=</span> <span class="mf">20.0f</span><span class="p">;</span>
+
+<span class="n">MainWindow</span><span class="o">::</span><span class="n">MainWindow</span><span class="p">()</span>
+<span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Trigger the UI layout.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Ui_MainWindow</span><span class="p">;</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">setupUi</span><span class="p">(</span><span class="n">this</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Initialize the energy visualization pipeline objects.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkMetaImageReader</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyVolume</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolume</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyMapper</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkSmartVolumeMapper</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkPiecewiseFunction</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkColorTransferFunction</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Initialize the reference visualization pipeline objects.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceReader</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkMetaImageReader</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceVolume</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolume</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceMapper</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkSmartVolumeMapper</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceOpacity</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkPiecewiseFunction</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceColor</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkColorTransferFunction</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Initialize VTK Renderers.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;</span> <span class="n">mainRenderer</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;</span> <span class="n">xyRenderer</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;</span> <span class="n">xzRenderer</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;</span> <span class="n">yzRenderer</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkRenderer</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>The pipelines will be connected once data is loaded.  For now just
+add the actors and volumes to the renderer.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">mainRenderer</span><span class="o">-&gt;</span><span class="n">AddVolume</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceVolume</span><span class="p">);</span>
+  <span class="n">mainRenderer</span><span class="o">-&gt;</span><span class="n">AddVolume</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyVolume</span><span class="p">);</span>
+
+ </pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>VTK/Qt wedded.  These are QVTKWidgets, which are essentially Qt-wrapped
+vtkRenderWindows.  All render windows need renderers.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">mainWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddRenderer</span><span class="p">(</span><span class="n">mainRenderer</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xyWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddRenderer</span><span class="p">(</span><span class="n">xyRenderer</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xzWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddRenderer</span><span class="p">(</span><span class="n">xzRenderer</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">yzWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddRenderer</span><span class="p">(</span><span class="n">yzRenderer</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Initialize the slice visualization objects.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">SliceView</span> <span class="n">xyView</span> <span class="o">=</span> <span class="p">{</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkImageViewer2</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">(),</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xyWidget</span><span class="p">,</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xySlider</span> <span class="p">};</span>
+
+  <span class="n">SliceView</span> <span class="n">xzView</span> <span class="o">=</span> <span class="p">{</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkImageViewer2</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">(),</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xzWidget</span><span class="p">,</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xzSlider</span> <span class="p">};</span>
+
+  <span class="n">SliceView</span> <span class="n">yzView</span> <span class="o">=</span> <span class="p">{</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkImageViewer2</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">(),</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">yzWidget</span><span class="p">,</span> 
+             <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">yzSlider</span> <span class="p">};</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Tell the slice visualizations what their orientation should be.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">xyView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetSliceOrientationToXY</span><span class="p">();</span>
+  <span class="n">xzView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetSliceOrientationToXZ</span><span class="p">();</span>
+  <span class="n">yzView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetSliceOrientationToYZ</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>Transform the slice actors so that they conform to a standard way of 
+viewing axial/sagittal/coronal images.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">xyView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">GetImageActor</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetScale</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">);</span>
+  <span class="n">xzView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">GetImageActor</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">RotateY</span><span class="p">(</span><span class="mf">90.0</span><span class="p">);</span>
+  <span class="n">yzView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">GetImageActor</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetScale</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">);</span>
+  <span class="n">yzView</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">GetImageActor</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">RotateX</span><span class="p">(</span><span class="mf">90.0</span><span class="p">);</span>
+
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">SliceViews</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">xyView</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">SliceViews</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">xzView</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">SliceViews</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">yzView</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="n">MainWindow</span><span class="o">::~</span><span class="n">MainWindow</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">delete</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">NetworkManager</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_actionQuit_triggered</span><span class="p">()</span> 
+<span class="p">{</span>
+  <span class="n">qApp</span><span class="o">-&gt;</span><span class="n">exit</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_xySlider_valueChanged</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">UpdateSliceView</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_xzSlider_valueChanged</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">UpdateSliceView</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_yzSlider_valueChanged</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">UpdateSliceView</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_energySpinBox_valueChanged</span><span class="p">(</span><span class="kt">double</span> <span class="n">val</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">double</span> <span class="n">ov1</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span>       <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="kt">double</span> <span class="n">ov2</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="o">+</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span>      <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">ov1</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">ov2</span><span class="p">);</span>
+
+  <span class="kt">double</span> <span class="n">cv1</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="kt">double</span> <span class="n">cv2</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="o">+</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">cv1</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">cv2</span><span class="p">);</span>
+
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">mainWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Render</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_referenceSpinBox_valueChanged</span><span class="p">(</span><span class="kt">double</span> <span class="n">val</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">double</span> <span class="n">ov</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span>           <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="kt">double</span> <span class="n">cv</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceOpacity</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">ov</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceColor</span><span class="o">-&gt;</span><span class="n">SetNodeValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">cv</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">mainWidget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Render</span><span class="p">();</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>This is called via the &ldquo;Load Energy Volume&rdquo; menu item </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_actionLoadEnergy_triggered</span><span class="p">()</span>
+<span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Open a Qt dialog for to select a <code>.mhd</code> file.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">QString</span> <span class="n">fileName</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">::</span><span class="n">getOpenFileName</span><span class="p">(</span>
+    <span class="n">this</span><span class="p">,</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;Open Meta Image&quot;</span><span class="p">),</span> <span class="s">&quot;.&quot;</span><span class="p">,</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;Image Files (*.mhd)&quot;</span><span class="p">));</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p><code>fileName</code> will be <code>NULL</code> if the user clicked &ldquo;Cancel&rdquo;.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span> <span class="p">(</span><span class="n">fileName</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+  <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Read in the mhd file.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">SetFileName</span><span class="p">(</span><span class="n">fileName</span><span class="p">.</span><span class="n">toAscii</span><span class="p">());</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">Update</span><span class="p">();</span>
+        
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">InitializeEnergy</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">on_actionLoadReference_triggered</span><span class="p">()</span>
+<span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Open a Qt dialog for to select a <code>.mhd</code> file.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">QString</span> <span class="n">fileName</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">::</span><span class="n">getOpenFileName</span><span class="p">(</span>
+    <span class="n">this</span><span class="p">,</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;Open Meta Image&quot;</span><span class="p">),</span> <span class="s">&quot;.&quot;</span><span class="p">,</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;Image Files (*.mhd)&quot;</span><span class="p">));</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p><code>fileName</code> will be <code>NULL</code> if the user clicked &ldquo;Cancel&rdquo;.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span> <span class="p">(</span><span class="n">fileName</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+  <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Read in the mhd file.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceReader</span><span class="o">-&gt;</span><span class="n">SetFileName</span><span class="p">(</span><span class="n">fileName</span><span class="p">.</span><span class="n">toAscii</span><span class="p">());</span>
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceReader</span><span class="o">-&gt;</span><span class="n">Update</span><span class="p">();</span>
+        
+    <span class="n">this</span><span class="o">-&gt;</span><span class="n">InitializeReference</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">InitializeEnergy</span><span class="p">()</span>
+<span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>All of the widgets are disabled at first (set with Qt Designer). This 
+function only gets called after data has been loaded, so it&rsquo;s now safe
+to enabled them.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">energySpinBox</span><span class="o">-&gt;</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xySlider</span><span class="o">-&gt;</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">xzSlider</span><span class="o">-&gt;</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">yzSlider</span><span class="o">-&gt;</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+    </pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Initialize the visualizations.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">Initialize3dView</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">InitializeSliceViews</span><span class="p">();</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>Initialize the opacity and color transfer functions for the energy volume.
+This is a composite volume rendering, so opacities and colors of data values
+are visually accumulated toward the viewer&rsquo;s eye.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">Initialize3dView</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyMapper</span><span class="o">-&gt;</span><span class="n">SetInputConnection</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">GetOutputPort</span><span class="p">());</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyMapper</span><span class="o">-&gt;</span><span class="n">SetBlendModeToComposite</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>Ramp from black to red near around the selected data value.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">double</span> <span class="n">v</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">energySpinBox</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="o">-&gt;</span><span class="n">AddRGBPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>     <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="o">-&gt;</span><span class="n">AddRGBPoint</span><span class="p">(</span><span class="n">v</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="o">-&gt;</span><span class="n">AddRGBPoint</span><span class="p">(</span><span class="n">v</span><span class="o">+</span><span class="mf">5.0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>Ramp from transparent to slightly dense around the selected value.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="o">-&gt;</span><span class="n">AddPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="o">-&gt;</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">v</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="o">-&gt;</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">v</span><span class="o">+</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">);</span>
+  
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolumeProperty</span><span class="o">&gt;</span> <span class="n">property</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolumeProperty</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetScalarOpacity</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyOpacity</span><span class="p">);</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetColor</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyColor</span><span class="p">);</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">ShadeOff</span><span class="p">();</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetInterpolationTypeToLinear</span><span class="p">();</span>
+
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyVolume</span><span class="o">-&gt;</span><span class="n">SetProperty</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyVolume</span><span class="o">-&gt;</span><span class="n">SetMapper</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyMapper</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>Reset the camera. This causes the volume rendering to fill the viewport.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">vtkRenderer</span><span class="o">*</span> <span class="n">ren</span> <span class="o">=</span> 	<span class="n">this</span><span class="o">-&gt;</span><span class="n">GetRenderer</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">mainWidget</span><span class="p">);</span>
+  <span class="n">ren</span><span class="o">-&gt;</span><span class="n">ResetCamera</span><span class="p">();</span>
+  <span class="n">ren</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Render</span><span class="p">();</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>Connect each slice vis. pipeline.  These are short: <code>vtkImageViewer2</code> 
+has its own RenderWindow, so assign that to the QVTKWidget.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">InitializeSliceViews</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">SliceView</span><span class="o">&amp;</span> <span class="n">view</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">SliceViews</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+
+    <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetInputConnection</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">GetOutputPort</span><span class="p">());</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">widget</span><span class="o">-&gt;</span><span class="n">SetRenderWindow</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">());</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetupInteractor</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">widget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetInteractor</span><span class="p">());</span>
+
+    <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetColorLevel</span><span class="p">(</span><span class="n">DEFAULT_SLICE_ENERGY_LEVEL</span><span class="p">);</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetColorWindow</span><span class="p">(</span><span class="n">DEFAULT_SLICE_ENERGY_WINDOW</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-26'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-26">&#182;</a>
+        </div>
+        <p>Initialize to the middle slice on this axis.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="kt">int</span><span class="o">*</span> <span class="n">dims</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">GetOutput</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetDimensions</span><span class="p">();</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetSlice</span><span class="p">(</span><span class="n">dims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">);</span>
+
+    <span class="n">vtkRenderer</span><span class="o">*</span> <span class="n">ren</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">GetRenderer</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">widget</span><span class="p">);</span>
+    <span class="n">ren</span><span class="o">-&gt;</span><span class="n">ResetCamera</span><span class="p">();</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">widget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Render</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-27'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-27">&#182;</a>
+        </div>
+        <p>Update a particular slice visualization&rsquo;s pipeline.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">UpdateSliceView</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">SliceView</span><span class="o">&amp;</span> <span class="n">view</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">SliceViews</span><span class="p">[</span><span class="n">index</span><span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-28'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-28">&#182;</a>
+        </div>
+        <p>convert the slider&rsquo;s index to a [0,1] float.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">float</span> <span class="n">p</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">slider</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">()</span> <span class="o">-</span> <span class="n">view</span><span class="p">.</span><span class="n">slider</span><span class="o">-&gt;</span><span class="n">minimum</span><span class="p">())</span> <span class="o">/</span> 
+    <span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">slider</span><span class="o">-&gt;</span><span class="n">maximum</span><span class="p">()</span> <span class="o">-</span> <span class="n">view</span><span class="p">.</span><span class="n">slider</span><span class="o">-&gt;</span><span class="n">minimum</span><span class="p">());</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-29'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-29">&#182;</a>
+        </div>
+        <p>Set the slice index according to the image dimensions on this axis.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">int</span><span class="o">*</span> <span class="n">dims</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">EnergyReader</span><span class="o">-&gt;</span><span class="n">GetOutput</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetDimensions</span><span class="p">();</span>
+  <span class="n">view</span><span class="p">.</span><span class="n">viewer</span><span class="o">-&gt;</span><span class="n">SetSlice</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">dims</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-30'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-30">&#182;</a>
+        </div>
+        <p>Initialize the color and opacity transfer functions for the reference atlas
+volume renderer.  This is a maximum intensity projection, so only the color
+and opacity of the maximum data value is shown, without any accumulation.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kt">void</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">InitializeReference</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">referenceSpinBox</span><span class="o">-&gt;</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceMapper</span><span class="o">-&gt;</span><span class="n">SetInputConnection</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceReader</span><span class="o">-&gt;</span><span class="n">GetOutputPort</span><span class="p">());</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceMapper</span><span class="o">-&gt;</span><span class="n">SetBlendModeToMaximumIntensity</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-31'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-31">&#182;</a>
+        </div>
+        <p>Ramp opacity from transparent to opaque between 0 and the selected value.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">double</span> <span class="n">v</span> <span class="o">=</span> <span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">referenceSpinBox</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">();</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceOpacity</span><span class="o">-&gt;</span><span class="n">AddSegment</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-32'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-32">&#182;</a>
+        </div>
+        <p>Color is always white.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceColor</span><span class="o">-&gt;</span><span class="n">AddRGBSegment</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> 
+                    <span class="n">v</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
+  
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolumeProperty</span><span class="o">&gt;</span> <span class="n">property</span> <span class="o">=</span> <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolumeProperty</span><span class="o">&gt;::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetScalarOpacity</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceOpacity</span><span class="p">);</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetColor</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceColor</span><span class="p">);</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">ShadeOff</span><span class="p">();</span>
+  <span class="n">property</span><span class="o">-&gt;</span><span class="n">SetInterpolationTypeToLinear</span><span class="p">();</span>
+
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceVolume</span><span class="o">-&gt;</span><span class="n">SetProperty</span><span class="p">(</span><span class="n">property</span><span class="p">);</span>
+  <span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceVolume</span><span class="o">-&gt;</span><span class="n">SetMapper</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ReferenceMapper</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-33'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-33">&#182;</a>
+        </div>
+        <p>Reset the camera.  This causes the contour geometry to fill the viewport.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">vtkRenderer</span><span class="o">*</span> <span class="n">ren</span> <span class="o">=</span> 	<span class="n">this</span><span class="o">-&gt;</span><span class="n">GetRenderer</span><span class="p">(</span><span class="n">this</span><span class="o">-&gt;</span><span class="n">ui</span><span class="o">-&gt;</span><span class="n">mainWidget</span><span class="p">);</span>
+  <span class="n">ren</span><span class="o">-&gt;</span><span class="n">ResetCamera</span><span class="p">();</span>
+  <span class="n">ren</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Render</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">vtkRenderer</span><span class="o">*</span> <span class="n">MainWindow</span><span class="o">::</span><span class="n">GetRenderer</span><span class="p">(</span><span class="n">QVTKWidget</span><span class="o">*</span> <span class="n">widget</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">widget</span><span class="o">-&gt;</span><span class="n">GetRenderWindow</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetRenderers</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetFirstRenderer</span><span class="p">();</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

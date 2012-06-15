@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>download_data.py</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>download_data.py</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This is a simple script that downloads and extracts the atlasVolume 
+and grid file archives.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">zipfile</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>These are hard-coded paths to URLs for downloading expression volumes.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">API_SERVER</span> <span class="o">=</span> <span class="s">&quot;http://api.brain-map.org/&quot;</span>
+<span class="n">API_DATA_PATH</span> <span class="o">=</span> <span class="n">API_SERVER</span> <span class="o">+</span> <span class="s">&quot;api/v2/data/&quot;</span>
+
+<span class="n">REFERENCE_SPACE_ID</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">REFERENCE_SPACE_URL</span> <span class="o">=</span> <span class="p">(</span><span class="n">API_DATA_PATH</span> <span class="o">+</span> <span class="s">&quot;ReferenceSpace/query.json?criteria=[id$eq</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">+</span> \
+                          <span class="s">&quot;&amp;include=well_known_files[path$li&#39;*atlasVolume.zip&#39;]&quot;</span> <span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">REFERENCE_SPACE_ID</span><span class="p">)</span>
+
+<span class="n">GRID_FMT</span> <span class="o">=</span> <span class="n">API_SERVER</span> <span class="o">+</span> <span class="s">&quot;grid_data/download/</span><span class="si">%d</span><span class="s">&quot;</span>
+
+<span class="n">DEFAULT_DATA_SET_ID</span> <span class="o">=</span> <span class="mi">69855739</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Download a grid file from the URL above by substituting in the data set id 
+argument.  Grid files are .zip files that will be downloaded to a 
+temporary location, where it can be unzipped and then extracted.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadGridFile</span><span class="p">(</span><span class="n">dataSetId</span><span class="p">,</span><span class="n">outputDirectory</span><span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">GRID_FMT</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataSetId</span><span class="p">)</span>
+    <span class="n">fh</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+    <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">fh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">outputDirectory</span><span class="p">,[</span><span class="s">&#39;energy.mhd&#39;</span><span class="p">,</span><span class="s">&#39;energy.raw&#39;</span><span class="p">])</span>
+
+    <span class="n">zf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Make a query to the API via a URL.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">QueryAPI</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="n">startRow</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">numRows</span> <span class="o">=</span> <span class="mi">2000</span>
+    <span class="n">totalRows</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>the ontology has to be downloaded in pages, since the API will not return
+more than 2000 rows at once.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">pagedUrl</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s">&#39;&amp;startRow=</span><span class="si">%d</span><span class="s">&amp;numRows=</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">startRow</span><span class="p">,</span><span class="n">numRows</span><span class="p">)</span>
+
+        <span class="k">print</span> <span class="n">pagedUrl</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">pagedUrl</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">totalRows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">totalRows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;totalRows&#39;</span><span class="p">])</span>
+
+        <span class="n">startRow</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">startRow</span> <span class="o">&gt;=</span> <span class="n">totalRows</span><span class="p">:</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="n">rows</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Download reference space meta information from the API.  Specifically, this 
+is looking for the download link to the zip file containing the atlas
+volume at the same resolution as the grid files.  Then, download the
+link and unzip the archive to a specified location.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadAtlasVolume</span><span class="p">(</span><span class="n">outputDirectory</span><span class="p">):</span>
+    <span class="n">refspace</span> <span class="o">=</span> <span class="n">QueryAPI</span><span class="p">(</span><span class="n">REFERENCE_SPACE_URL</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">reffile</span> <span class="o">=</span> <span class="n">refspace</span><span class="p">[</span><span class="s">&#39;well_known_files&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">fh</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">API_SERVER</span> <span class="o">+</span> <span class="n">reffile</span><span class="p">[</span><span class="s">&quot;download_link&quot;</span><span class="p">])</span>
+    <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">fh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">outputDirectory</span><span class="p">,[</span><span class="s">&#39;atlasVolume/atlasVolume.mhd&#39;</span><span class="p">,</span><span class="s">&#39;atlasVolume/atlasVolume.raw&#39;</span><span class="p">])</span>
+    <span class="n">zf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Parse command line arguments.  If no arguments are supplied, some defaults
+are used just for demonstration. The <code>formatter_class</code> is just there so 
+that default values are printed in the usage statement.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s">&quot;Download the atlasVolume and a grid file for a data set&quot;</span><span class="p">,</span>
+                                     <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--dataSetId&#39;</span><span class="p">,</span><span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_DATA_SET_ID</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;data set id&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--outputDirectory&#39;</span><span class="p">,</span><span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;output directory&#39;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">DownloadAtlasVolume</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">outputDirectory</span><span class="p">)</span>
+    <span class="n">DownloadGridFile</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataSetId</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">outputDirectory</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>sunburst.js</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="import.js.html">import.js</a>
+          <a class="source" href="sunburst.js.html">sunburst.js</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>sunburst.js</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>A an example visualization of adult mouse gene expression data using the D3 
+partition and radial layouts.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This uses the Modernizr JS library to check to see if the page supports SVG.
+If it does not, throw an error.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">Modernizr</span><span class="p">.</span><span class="nx">svg</span><span class="p">){</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#chart&#39;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;svgError&#39;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;This demo requires SVG support. &quot;</span> <span class="o">+</span>
+          <span class="s2">&quot;Click &lt;a href=&#39;http://caniuse.com/#cats=SVG&#39;&gt;here&lt;/a&gt; &quot;</span> <span class="o">+</span> 
+          <span class="s2">&quot;to see which browsers support SVG.&quot;</span><span class="p">));</span>
+  <span class="k">throw</span> <span class="s1">&#39;SVG not supported&#39;</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Set default SectionDataSetId. Then parse the  parameter string and load a 
+specified id if requested. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">sectionDataSetId</span> <span class="o">=</span> <span class="mi">69855739</span><span class="p">;</span> 
+
+<span class="kd">var</span> <span class="nx">urlVars</span> <span class="o">=</span> <span class="nx">getUrlVars</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="s1">&#39;id&#39;</span> <span class="k">in</span> <span class="nx">urlVars</span><span class="p">)</span>
+  <span class="nx">sectionDataSetId</span> <span class="o">=</span>  <span class="nx">urlVars</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Constants defining various parameters of the visualization.</p>
+
+<ul>
+<li><code>w,h</code>: width/height of the visualization in pixels.</li>
+<li><code>r</code>: the radius of the vis. in pixels.</li>
+<li><code>outerWidth</code>: how many pixels to reserve for the bar chart.</li>
+</ul>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">width</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">h</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">height</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">outerWidth</span> <span class="o">=</span> <span class="nx">r</span><span class="o">/</span><span class="mf">3.5</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">expDomain</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">13</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">rootNode</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">expressionHash</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>D3 scales, which interpolate linearly from a domain (default [0,1], unless 
+specified) to a range (also default [0,1]).  The <code>x</code> scale maps from D3&rsquo;s
+normalized layout coordinates to radians.  The <code>y</code> scale similarly maps
+to radial pixel distance from the origin of the plot.  The <code>yOut</code> scale
+is also for radial pixel distance, this time for the expression bar chart
+around the outside of the ontology.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">range</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">y</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">range</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">((</span><span class="nx">r</span> <span class="o">-</span> <span class="p">.</span><span class="mi">5</span> <span class="o">*</span> <span class="nx">outerWidth</span><span class="p">)</span> <span class="o">/</span> <span class="nx">r</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="nx">r</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">yOut</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">domain</span><span class="p">(</span><span class="nx">expDomain</span><span class="p">).</span><span class="nx">range</span><span class="p">([</span><span class="nx">r</span> <span class="o">-</span> <span class="nx">outerWidth</span><span class="p">,</span> <span class="nx">r</span><span class="p">]).</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">expcolor</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">domain</span><span class="p">(</span><span class="nx">expDomain</span><span class="p">).</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;#eee&quot;</span><span class="p">,</span> <span class="s2">&quot;red&quot;</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">highlightcolor</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">domain</span><span class="p">(</span><span class="nx">expDomain</span><span class="p">).</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;#eee&quot;</span><span class="p">,</span> <span class="s2">&quot;#fdd&quot;</span><span class="p">]);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Initialize page elements.  Most important, in this section the scale button
+options are initialized.  This allows the arcs depicting both ontological 
+structures and gene expression values to be scaled by gene expression magnitude
+or uniformly.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s2">&quot;background&quot;</span><span class="p">,</span><span class="s2">&quot;no-repeat center url(\&quot;../images/loading.gif\&quot;)&quot;</span><span class="p">);</span>
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#homeButton&quot;</span><span class="p">).</span><span class="nx">button</span><span class="p">({</span> <span class="nx">icons</span><span class="o">:</span> <span class="p">{</span> <span class="nx">primary</span><span class="o">:</span> <span class="s2">&quot;ui-icon-home&quot;</span> <span class="p">}});</span>
+
+<span class="kd">var</span> <span class="nx">structureLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#structureLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">expressionLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#expressionLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">scaleButtonContainer</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#scaleButtons&quot;</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">scaleOptions</span> <span class="o">=</span> <span class="p">[{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;expression&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;#expressionButton&quot;</span><span class="p">,</span> <span class="nx">fn</span><span class="o">:</span> <span class="nx">expressionValue</span> <span class="p">},</span>
+          <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;#uniformButton&quot;</span><span class="p">,</span> <span class="nx">fn</span><span class="o">:</span> <span class="nx">uniformValue</span> <span class="p">}];</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">scaleOptions</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">opt</span> <span class="o">=</span> <span class="nx">scaleOptions</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">;</span>
+  <span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">))</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;radio&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">opt</span> <span class="o">+</span> <span class="s1">&#39;Button&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;scaleRadio&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="nx">opt</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;checked&#39;</span><span class="p">,</span> <span class="nx">opt</span> <span class="o">==</span> <span class="s1">&#39;uniform&#39;</span><span class="p">));</span>
+
+  <span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">))</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;for&#39;</span><span class="p">,</span> <span class="nx">opt</span> <span class="o">+</span> <span class="s1">&#39;Button&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">opt</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">buttonset</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>These functions are used by D3 to determine how large data arcs should be.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">uniformValue</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>If the expression hash doesn&rsquo;t contain a particular structure id, for 
+visualization purposes treat the structure as having no expression energy.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="kd">var</span> <span class="nx">eout</span> <span class="o">=</span> <span class="nx">expressionHash</span><span class="p">[</span><span class="nx">d</span><span class="p">.</span><span class="nx">id</span><span class="p">];</span> 
+  <span class="k">return</span> <span class="nx">eout</span> <span class="o">?</span> <span class="nx">eout</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span> 
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Construct the main svg element, size it properly, and apply a global 
+transform shifts the origin to the center.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">vis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:svg&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span><span class="s2">&quot;vis&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="nx">w</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:g&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">w</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">h</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>This is the D3 partition layout.  It takes a hierarchical hash and 
+determines the relative proportion of children and their parents
+in normalized coordinates [0,1].</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">partition</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">layout</span><span class="p">.</span><span class="nx">partition</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nx">graph_order</span> <span class="o">-</span> <span class="nx">a</span><span class="p">.</span><span class="nx">graph_order</span><span class="p">;</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">uniformValue</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>This arc map takes normalized layout coordinates, maps them to radians and
+radial pixel distance, then converts this to an actual SVG primitive.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">arc</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">svg</span><span class="p">.</span><span class="nx">arc</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">startAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">)));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">endAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">)));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">innerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">r</span> <span class="o">-</span> <span class="nx">outerWidth</span> <span class="o">:</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span><span class="p">));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">outerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">yOut</span><span class="p">(</span><span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">))</span> <span class="o">:</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dy</span><span class="p">));</span> <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Same as above, except for use in the gene expression bar chart.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">arcHighlight</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">svg</span><span class="p">.</span><span class="nx">arc</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">startAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">)));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">endAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">)));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">innerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">r</span> <span class="o">-</span> <span class="nx">outerWidth</span> <span class="o">:</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dy</span><span class="p">));</span> <span class="p">})</span>
+  <span class="p">.</span><span class="nx">outerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">r</span><span class="p">;</span> <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Finally load the data and transform it into a D3-partition-able format.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">importData</span><span class="p">(</span><span class="nx">sectionDataSetId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">structureTree</span><span class="p">,</span> <span class="nx">expression</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">rootNode</span> <span class="o">=</span> <span class="nx">structureTree</span><span class="p">;</span>
+  <span class="nx">expressionHash</span> <span class="o">=</span> <span class="nx">expression</span><span class="p">;</span>
+
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s2">&quot;background&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>The mouseover highlight goes first, so that the actual visualization 
+elements will be drawn on top due to z-ordering.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">highlight</span> <span class="o">=</span> <span class="nx">vis</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:path&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;#eee&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>The most important bit of code: this lays out the actual arcs, both for
+the ontology and the bar chart.  <code>vis</code> is the chart div defined in the 
+HTML. Calling the <code>data</code> function does a data join of a single element 
+(the ontology).  The <code>selectAll</code> call searches for any existing class 
+&ldquo;dataArc&rdquo; elements within the chart and assigns them a function 
+(<code>partition.nodes</code>), which maps the <code>structureTree</code> ontology into an 
+array of tree nodes. The <code>enter</code> function creates a callback for what 
+to do for each of these new data nodes, which we use to create new SVG 
+path primitives.  The properties of these primites are then defined.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">vis</span><span class="p">.</span><span class="nx">data</span><span class="p">([</span><span class="nx">structureTree</span><span class="p">]).</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;dataArc&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">partition</span><span class="p">.</span><span class="nx">nodes</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">enter</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:path&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">arc</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="nx">arcColor</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">arcStroke</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="nx">arcStrokeWidth</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;click&quot;</span><span class="p">,</span> <span class="nx">click</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseover&quot;</span><span class="p">,</span> <span class="nx">mouseover</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseout&quot;</span><span class="p">,</span> <span class="nx">mouseout</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">stash</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>When the user mouses over a node, the properties of that node are displayed
+on the page and highlighted.  When the mouse leaves a node, these things are
+erased.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">mouseover</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> 
+    <span class="nx">highlight</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">arcHighlight</span><span class="p">(</span><span class="nx">d</span><span class="p">));</span>
+    <span class="nx">highlight</span><span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">highlightcolor</span><span class="p">(</span><span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">))</span> <span class="o">:</span> <span class="s2">&quot;#eee&quot;</span><span class="p">)</span>
+    <span class="nx">structureLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="nx">expressionLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kd">function</span> <span class="nx">mouseout</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">highlight</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="nx">highlight</span><span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;#fff&quot;</span><span class="p">);</span>
+    <span class="nx">structureLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+    <span class="nx">expressionLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>When a node is clicked, an interesting transition happens.  The <code>arcTween</code>
+method describes what happens during that transition.  <em>Note:</em> the <code>arcTween</code>
+method is called with the clicked node, which returns a function, so the
+<code>attrTween</code> callback is the return value of <code>arcTween</code> (which depends on
+the position of the new root node).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">click</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">rootNode</span> <span class="o">=</span> <span class="nx">d</span><span class="p">;</span>
+
+      <span class="nx">highlight</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+      <span class="nx">structureLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+      <span class="nx">expressionLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+      <span class="nx">path</span><span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+        <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">750</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">attrTween</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">arcTween</span><span class="p">(</span><span class="nx">rootNode</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>These buttons re-layout the entire chart based on whether ontology leafs
+are scaled in proportion to their expression energy or if they all
+take up the same amount of space.  The transition is taken care of
+by the <code>dataTween</code> function.  <em>As before:</em> the <code>attrTween</code> callback is
+the return value of the <code>dataTween</code> method.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">scaleOptions</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">button</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">$</span><span class="p">(</span><span class="nx">button</span><span class="p">.</span><span class="nx">id</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">dataTransition</span><span class="p">(</span><span class="nx">button</span><span class="p">.</span><span class="nx">fn</span><span class="p">);</span> <span class="p">});</span>
+  <span class="p">});</span>
+
+  <span class="kd">function</span> <span class="nx">dataTransition</span><span class="p">(</span><span class="nx">valueFunction</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">path</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">partition</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">valueFunction</span><span class="p">))</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="nx">arcColor</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">arcStroke</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="nx">arcStrokeWidth</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+      <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">750</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">attrTween</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">dataTween</span><span class="p">(</span><span class="nx">rootNode</span><span class="p">));</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Several functions that determine how the data nodes are displayed.
+If the nodes are leaves, they are colored by their z-score.  Otherwise
+they are colored using ontological colors.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">arcColor</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> 
+      <span class="s2">&quot;#&quot;</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">color_hex_triplet</span> <span class="o">:</span> 
+      <span class="nx">expcolor</span><span class="p">(</span><span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kd">function</span> <span class="nx">arcStroke</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="s2">&quot;#fff&quot;</span> <span class="o">:</span> <span class="s2">&quot;none&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="kd">function</span> <span class="nx">arcStrokeWidth</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s2">&quot;1px&quot;</span><span class="p">;</span>
+  <span class="p">}</span>					   </pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>This function returns a callback used by D3&rsquo;s <code>attrTween</code> method to 
+transition the arcs so that a new node is the (visible) root of the ontology.
+This is done by changing the domain and range <code>x</code> and <code>y</code> scales.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>The first three variables are scale interpolators. The x domain normally 
+spans [0,1], but we&rsquo;re going to transition it to the x range of <code>d</code>. The same
+applies for <code>y</code>, which will be transitioned to the center.  The <code>y</code> range 
+interpolator ensures that the parent of the clicked node shows up in the center.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">arcTween</span><span class="p">(</span><span class="nx">root</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="kd">var</span> <span class="nx">xd</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(),</span> <span class="p">[</span><span class="nx">root</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">root</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">root</span><span class="p">.</span><span class="nx">dx</span><span class="p">]);</span>
+    <span class="kd">var</span> <span class="nx">yd</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="nx">y</span><span class="p">.</span><span class="nx">domain</span><span class="p">(),</span> <span class="p">[</span><span class="nx">root</span><span class="p">.</span><span class="nx">y</span><span class="p">,</span> <span class="mi">1</span><span class="p">]);</span>
+    <span class="kd">var</span> <span class="nx">yr</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="nx">y</span><span class="p">.</span><span class="nx">range</span><span class="p">(),</span> <span class="p">[</span><span class="nx">root</span><span class="p">.</span><span class="nx">y</span> <span class="o">?</span> <span class="mi">20</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">r</span> <span class="o">-</span> <span class="nx">outerWidth</span><span class="p">]);</span>
+    </pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>For each node, return an interpolator function that D3 can use to transition.
+The scales only need to be modified once per transition step, so only do this
+when i = 0. In all cases the interpolator just re-applies the arc function,
+which uses our newly updated scales to produce new curves.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">i</span>
+        <span class="o">?</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">d</span><span class="p">);</span> <span class="p">}</span>
+        <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span> <span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">xd</span><span class="p">(</span><span class="nx">t</span><span class="p">));</span> <span class="nx">y</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">yd</span><span class="p">(</span><span class="nx">t</span><span class="p">)).</span><span class="nx">range</span><span class="p">(</span><span class="nx">yr</span><span class="p">(</span><span class="nx">t</span><span class="p">));</span> <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">d</span><span class="p">);</span> <span class="p">};</span>
+    <span class="p">};</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>Cache the current location of an element.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">stash</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span> <span class="o">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">;</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span> <span class="o">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">;</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>This is a slightly more complicated transition, called when the data scaling
+variable has changed.  This means all of the nodes have new positions and 
+widths, so we transition node position from cached values to new values. 
+We also need to transition the domain of the <code>x</code> scale because the root 
+node <code>r</code> has a new position as well.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">dataTween</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">xd</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(),</span> <span class="p">[</span><span class="nx">r</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">r</span><span class="p">.</span><span class="nx">dx</span><span class="p">]);</span>
+
+    <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">arci</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">({</span><span class="nx">x</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span><span class="p">,</span> <span class="nx">dx</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span><span class="p">},</span> <span class="nx">d</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>the domain only gets updated once.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="k">if</span> <span class="p">(</span><span class="nx">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">xd</span><span class="p">(</span><span class="nx">t</span><span class="p">));</span>
+
+          <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nx">arci</span><span class="p">(</span><span class="nx">t</span><span class="p">);</span>
+          <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">x</span><span class="p">;</span>
+          <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">dx</span><span class="p">;</span>
+          <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nx">arci</span><span class="p">(</span><span class="nx">t</span><span class="p">);</span>
+          <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">x</span><span class="p">;</span>
+          <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">dx</span><span class="p">;</span>
+          <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+<span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-26'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-26">&#182;</a>
+        </div>
+        <p>This function splits the URL parameter string into a javascript hash.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">getUrlVars</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">vars</span> <span class="o">=</span> <span class="p">[],</span> <span class="nx">hash</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">hashes</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
+  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">hashes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nx">hash</span> <span class="o">=</span> <span class="nx">hashes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
+    <span class="nx">vars</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="nx">vars</span><span class="p">[</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nx">hash</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">vars</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>import.js</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="import.js.html">import.js</a>
+          <a class="source" href="sunburst.js.html">sunburst.js</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>import.js</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This script contains functions that load ontology and expression data for
+a given probe and donor.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>These contants are the structure id for the root element of the adult 
+mouse ontology to be used for visualization, the path to the data API,
+the ID of the adult mouse ontology, and a data set id to visualize. The
+chosen root of the ontology was chosen so that fiber tracts would not
+be displayed, as they were not annotated.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">rootId</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">apiPath</span> <span class="o">=</span> <span class="s2">&quot;http://api.brain-map.org/api/v2/&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ontologyId</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> 
+<span class="kd">var</span> <span class="nx">structureGraphId</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> 
+
+<span class="kd">function</span> <span class="nx">importData</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">structures</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">expression</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Download the structures. The <code>structure_graph_download</code> method downloads
+a hierarchical hash containing all of the structures from a single 
+ontology structure graph. StructureGraphs are essentially the same as 
+Ontologies, however for some projects it may be useful to have multiple 
+ontology organizations, hence the need for separate StructureGraphs. 
+When they have finished downloading, call <code>processStructures</code>.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s2">&quot;structure_graph_download/&quot;</span> <span class="o">+</span> <span class="nx">structureGraphId</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">;</span>
+  <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">crossDomain</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nx">success</span><span class="o">:</span> <span class="nx">processStructures</span><span class="p">,</span>
+    <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span> <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span> <span class="p">}</span>
+  <span class="p">});</span>
+       </pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Download the expression values.  The StructureUnionize class contains,
+amongst other things, the expression energy of each structure in the
+adult mouse atlas ontology.  When this is finished downloading, 
+call <code>processExpression</code>.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="s2">&quot;data/StructureUnionize/query.json&quot;</span> <span class="o">+</span> 
+       <span class="s2">&quot;?criteria=[structures.ontology_id$eq&quot;</span> <span class="o">+</span> <span class="nx">ontologyId</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="o">+</span> 
+       <span class="s2">&quot;[section_data_set_id$eq&quot;</span> <span class="o">+</span> <span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="o">+</span>
+       <span class="s2">&quot;&amp;include=structure&quot;</span><span class="p">,</span>
+       <span class="nx">processExpression</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>These two methods simply exist to set the <code>structures</code> and <code>expression</code>
+variables in <code>importData</code>&rsquo;s scope.  They both call <code>processData</code> 
+afterwards, which will only run one both variables have been set.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">processStructures</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>On Chrome, the response is already a javascript object. 
+On IE/Firefox, it comes back as a string.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">)</span> 
+      <span class="nx">data</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>						
+
+    <span class="nx">structures</span> <span class="o">=</span> <span class="nx">findChild</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nx">rootId</span><span class="p">);</span>
+    <span class="nx">processData</span><span class="p">();</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>This transforms the returned StructureUnionize rows into a hash from
+structure id to expression energy value.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">processExpression</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">expression</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">e</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+      <span class="nx">expression</span><span class="p">[</span><span class="nx">e</span><span class="p">.</span><span class="nx">structure_id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">expression_energy</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nx">processData</span><span class="p">();</span>
+  <span class="p">}</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Check that all of the data is finished downloading and returns it if so.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">processData</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">structures</span> <span class="o">||</span> <span class="o">!</span><span class="nx">expression</span><span class="p">)</span>
+      <span class="k">return</span><span class="p">;</span>
+
+    <span class="nx">callback</span><span class="p">(</span><span class="nx">structures</span><span class="p">,</span><span class="nx">expression</span><span class="p">);</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Find a structure&rsquo;s child structure, by structure id.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  
+  <span class="kd">function</span> <span class="nx">findChild</span><span class="p">(</span><span class="nx">structure</span><span class="p">,</span> <span class="nx">childId</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">structure</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">childId</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">structure</span><span class="p">;</span>
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">&lt;</span><span class="nx">structure</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">findChild</span><span class="p">(</span><span class="nx">structure</span><span class="p">.</span><span class="nx">children</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> <span class="nx">childId</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">r</span><span class="p">)</span> <span class="k">return</span> <span class="nx">r</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>If something goes wrong, alert the user.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="kd">var</span> <span class="nx">errorHtml</span> <span class="o">=</span> 
+      <span class="s2">&quot;&lt;p&gt;There was an error with the following query:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">url</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;Error message:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">response</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span><span class="p">;</span>
+    
+    <span class="kd">var</span> <span class="nx">dialog</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">);</span>
+    
+    <span class="kd">var</span> <span class="nx">existingErrors</span> <span class="o">=</span> <span class="nx">dialog</span><span class="p">.</span><span class="nx">html</span><span class="p">();</span>
+    
+    <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">)</span>
+      <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">existingErrors</span> <span class="o">+</span> <span class="nx">errorHtml</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">dialog</span><span class="p">({</span>
+        <span class="nx">width</span><span class="o">:</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="nx">height</span><span class="o">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="nx">modal</span><span class="o">:</span> <span class="kc">true</span>
+      <span class="p">});</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Make an API query.  You can&rsquo;t actually request all result rows of a query
+at one time.  This function takes care of appending all of the pages of
+results together.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="kd">var</span> <span class="nx">num_rows</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">total_rows</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+    <span class="nx">apiPageQuery</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Make the actual query.  Keep downloading more rows until they have 
+all been retrieved.  All API queries return the total number of rows
+in the request, so we have to make a request before we can find out
+how many rows will be in it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="kd">function</span> <span class="nx">apiPageQuery</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="nx">path</span> <span class="o">+</span> 
+        <span class="s2">&quot;&amp;start_row=&quot;</span> <span class="o">+</span> <span class="nx">rows</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span>
+        <span class="s2">&quot;&amp;num_rows=&quot;</span> <span class="o">+</span> <span class="nx">num_rows</span><span class="p">;</span>
+
+      <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="p">{</span>
+        <span class="nx">crossDomain</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>On Chrome, the response is already a javascript object. 
+On IE/Firefox, it comes back as a string.  </p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>          <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">)</span> 
+            <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">response</span><span class="p">);</span>						
+
+          <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">rows</span><span class="p">.</span><span class="nx">push</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">rows</span><span class="p">,</span> <span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">);</span>
+            <span class="nx">total_rows</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">total_rows</span><span class="p">);</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="nx">total_rows</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">isNaN</span><span class="p">(</span><span class="nx">total_rows</span><span class="p">))</span> 
+              <span class="nx">apiError</span><span class="p">(</span><span class="s2">&quot;total_rows incorrect&quot;</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">rows</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;=</span> <span class="nx">total_rows</span><span class="p">)</span> 
+              <span class="nx">onsuccess</span><span class="p">(</span><span class="nx">rows</span><span class="p">);</span>
+            <span class="k">else</span>
+              <span class="nx">apiPageQuery</span><span class="p">();</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

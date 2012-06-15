@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Expression Volume Fold Change - ABA</title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+  </head>
+  <body>
+	<h1> Expression Volume Fold Change </h1>
+	<div id="content">
+	  <img src="../images/foldchange.png" style="float:left; height: 650px;"/ >
+	  <div id="description">
+
+		<p> The grid service API allows users to download a compressed archive 
+		  containing an expression energy volume and XML description for a dataset.
+		  This example demonstrates how to read two of those volumes in Python 
+		  and compute the fold change between them for all structures in our 
+		  ontology.</p>
+
+		<p> After downloading the expression volumes, parsing our ontology, 
+		  and reading the reference annotation volume (which associates a voxel
+		  with a structure id), the Python script iterates through the 
+		  expression energy volumes and computes mean expression energy within
+		  each structure.  Mean expression energy for higher level structures
+		  is computed by having all child nodes contribute expression energy to
+		  their parents.</p>
+
+		<p> With the mean expression energy for all structures computed, fold
+		  change is simply the ratio of the two expression energies in each
+		  structure. The script prints these out in CSV format for easy import
+		  into analysis applications. </p>
+
+	  </div>
+
+	  <div id="documentation">
+		<h4> Documentation and Resources</h4>
+
+		<table>
+		  <tr>
+			<td><a href="../doc/foldchange/foldchange.py.html">foldchange.py</a></td>
+			<td>Data importing and processing documentation.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../foldchange/foldchange.tar.gz">foldchange.tar.gz</a></td>
+			<td>Archived source code.</td>
+		  </tr>
+		</table>
+
+		<p> <a href="../" id="homeButton">back to examples list</a> </p>	  
+
+		<script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+	  </div>
+	</div>
+  </body>
+  <script type="text/javascript">
+	$(document).ready()
+	{
+	$("#homeButton").button({ icons: { primary: "ui-icon-home" }});	
+	$("#documentation").css("top",620);
+	}
+  </script>
+
+</html>

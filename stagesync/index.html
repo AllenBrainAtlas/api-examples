@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title> Cross-Stage Image Synchronization</title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+	<script type="text/javascript" src="../javascripts/jquery.ie.cors.js"></script>
+	<script type="text/javascript" src="../javascripts/modernizr.svg.js"></script>
+    <style type="text/css">
+	  #imageTable {
+	  text-align: center;
+	  }
+
+	  #imageTable td {
+	  padding: 2px 10px;
+	  }
+
+	  #imageTable div.image {
+	  border: 2px solid #ddd;
+	  width: 285px;
+	  height: 285px;
+	  margin: auto auto;
+	  }
+
+	  #temporarySpacer {
+	  clear:both;
+	  width:1px;
+	  height:1000px;
+	  }
+
+	  .loading {
+	  background: no-repeat center url(../images/loading.gif);
+	  }
+
+	  .sourceCell {
+	  padding-bottom: 15px !important;
+	  }
+
+    </style>
+  </head>
+  <body>
+	<h1> Cross-Stage Image Synchronization </h1>
+	<div id="errorDialog" title="API Query Error"></div>
+	<div id="content">
+	  <table id="imageTable">
+	  </table>
+	  
+	  <div id="description">
+		<p> This page demonstrates how to use the API to retrieve a developing mouse
+		  ISH section image from one data set and find the nearest view of other
+		  developmental stages with the same gene using the <tt>image_to_image</tt> 
+		  method. This is accomplished by querying the RMA for SectionDataSets 
+		  displaying the same gene as the source section, but limited to a specific
+		  set of developmental stages in the developing mouse product.</p>
+
+		<p> It also shows how <tt>image_to_atlas</tt> can be used to synchronize
+		  the original section with a large set of reference atlases.  The set of
+		  displayed atlases is limited to the same developmental stages as those
+		  used to request ISH images for the <tt>image_to_image</tt> method. </p>
+
+		<p> To start with a different source section, append a <tt>sectionImageId</tt>
+		  to the URL string of this page.  For example: try section 
+		  <a href="../stagesync/index.html?sectionImageId=101171299">101171299</a>.</p>
+
+		<h4> Documentation and Resources</h4>
+
+		<p> <a href="../doc/stagesync/stagesync.js.html">stagesync.js</a>: Data importing and page layout documentation. </p>
+		<p> <a href="../doc/stagesync/javascripts/jquery.ie.cors.js.html">jquery.ie.cors.js</a>: Script enabling cross-origin AJAX requests in IE8 and IE9. </p>
+		<p> <a href="../doc/stagesync/javascripts/modernizr.svg.js.html">modernizr.svg.js</a>: Script detects if the browser supports SVG. </p>
+		<p> <a href="../stagesync/stagesync.tar.gz">stagesync.tar.gz</a>: Archived source code. </p>
+		<p> <a href="../" id="homeButton">back to examples list</a> </p>
+	  </div>
+
+	  <div id="temporarySpacer"></div>
+	  <script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+	</div>
+
+  </body>
+
+  <script type="text/javascript" src="../stagesync/stagesync.js"></script>
+</html>

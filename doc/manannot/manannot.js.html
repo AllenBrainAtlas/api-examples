@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>manannot.js</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>manannot.js</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">apiPath</span> <span class="o">=</span> <span class="s2">&quot;http://api.brain-map.org/api/v2/&quot;</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This uses the Modernizr JS library to check to see if the page supports SVG.
+If it does not, throw an error.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">Modernizr</span><span class="p">.</span><span class="nx">svg</span><span class="p">){</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#maContent&#39;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;svgError&#39;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;This demo requires SVG support. &quot;</span> <span class="o">+</span>
+          <span class="s2">&quot;Click &lt;a href=&#39;http://caniuse.com/#cats=SVG&#39;&gt;here&lt;/a&gt; &quot;</span> <span class="o">+</span> 
+          <span class="s2">&quot;to see which browsers support SVG.&quot;</span><span class="p">));</span>
+  <span class="k">throw</span> <span class="s1">&#39;SVG not supported&#39;</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>A convenience map that associates a developmental stage with its age-matched 
+reference atlas data set ID.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">ageDataSetMap</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;E11.5&quot;</span><span class="o">:</span> <span class="mi">100054043</span><span class="p">,</span>
+  <span class="s2">&quot;E13.5&quot;</span><span class="o">:</span> <span class="mi">100054042</span><span class="p">,</span>
+  <span class="s2">&quot;E15.5&quot;</span><span class="o">:</span> <span class="mi">100054041</span> 
+<span class="p">};</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Set the default data set ID, but override it if one exists in the URL.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">dataSetId</span> <span class="o">=</span> <span class="mi">100045975</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">urlVars</span> <span class="o">=</span> <span class="nx">getUrlVars</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="s1">&#39;dataSetId&#39;</span> <span class="k">in</span> <span class="nx">urlVars</span><span class="p">)</span>
+  <span class="nx">dataSetId</span> <span class="o">=</span> <span class="nx">urlVars</span><span class="p">[</span><span class="s1">&#39;dataSetId&#39;</span><span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>D3 is a javascript library that takes care of a lot of details useful for 
+visualization.  In this case, it&rsquo;s being used for transforming data values
+and categories into colors.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">energyDomain</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">energyScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">energyDomain</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;white&quot;</span><span class="p">,</span><span class="s2">&quot;red&quot;</span><span class="p">]);</span>
+
+<span class="kd">var</span> <span class="nx">intensityScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">ordinal</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="s2">&quot;Undetected&quot;</span><span class="p">,</span><span class="s2">&quot;Low&quot;</span><span class="p">,</span><span class="s2">&quot;Medium&quot;</span><span class="p">,</span><span class="s2">&quot;High&quot;</span><span class="p">,</span><span class="s2">&quot;Cannot Annotate&quot;</span><span class="p">])</span>
+  <span class="p">.</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;white&quot;</span><span class="p">,</span><span class="s2">&quot;#FDD&quot;</span><span class="p">,</span><span class="s2">&quot;#F66&quot;</span><span class="p">,</span><span class="s2">&quot;#F00&quot;</span><span class="p">,</span><span class="s2">&quot;lightgreen&quot;</span><span class="p">]);</span>
+
+<span class="kd">var</span> <span class="nx">densityScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">ordinal</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="s2">&quot;Undetected&quot;</span><span class="p">,</span><span class="s2">&quot;Low&quot;</span><span class="p">,</span><span class="s2">&quot;Medium&quot;</span><span class="p">,</span><span class="s2">&quot;High&quot;</span><span class="p">,</span><span class="s2">&quot;Cannot Annotate&quot;</span><span class="p">])</span>
+  <span class="p">.</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;white&quot;</span><span class="p">,</span><span class="s2">&quot;#FDD&quot;</span><span class="p">,</span><span class="s2">&quot;#F66&quot;</span><span class="p">,</span><span class="s2">&quot;#F00&quot;</span><span class="p">,</span><span class="s2">&quot;lightgreen&quot;</span><span class="p">]);</span>
+
+<span class="kd">var</span> <span class="nx">patternScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">ordinal</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="s2">&quot;Undetected&quot;</span><span class="p">,</span><span class="s2">&quot;Regional&quot;</span><span class="p">,</span><span class="s2">&quot;Gradient&quot;</span><span class="p">,</span><span class="s2">&quot;Full&quot;</span><span class="p">,</span><span class="s2">&quot;Cannot Annotate&quot;</span><span class="p">])</span>
+  <span class="p">.</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;white&quot;</span><span class="p">,</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span><span class="s2">&quot;magenta&quot;</span><span class="p">,</span><span class="s2">&quot;red&quot;</span><span class="p">,</span><span class="s2">&quot;lightgreen&quot;</span><span class="p">]);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Build the home button and slider that controls the expression energy colors.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#homeButton&quot;</span><span class="p">).</span><span class="nx">button</span><span class="p">({</span> <span class="nx">icons</span><span class="o">:</span> <span class="p">{</span> <span class="nx">primary</span><span class="o">:</span> <span class="s2">&quot;ui-icon-home&quot;</span> <span class="p">}});</span>
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energyLowerLabel&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">energyDomain</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energyUpperLabel&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">energyDomain</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energySlider&quot;</span><span class="p">).</span><span class="nx">slider</span><span class="p">({</span>
+  <span class="nx">range</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">min</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="nx">max</span><span class="o">:</span> <span class="mi">12</span><span class="p">,</span>
+  <span class="nx">values</span><span class="o">:</span> <span class="nx">energyDomain</span><span class="p">,</span>
+  <span class="nx">step</span><span class="o">:</span> <span class="mf">0.1</span><span class="p">,</span>
+  <span class="nx">slide</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">ui</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nx">ui</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
+      <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energyLowerLabel&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+      <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energyUpperLabel&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+      <span class="nx">energyScale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">ui</span><span class="p">.</span><span class="nx">values</span><span class="p">);</span>
+      <span class="nx">updateEnergy</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>The developing mouse ISH data and manual annotation data have different
+ontologies, so they have diagrams with different structure names.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">svgFile</span> <span class="o">=</span> <span class="s2">&quot;Level_5_March_2010.svg&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">maSvgFile</span> <span class="o">=</span> <span class="s2">&quot;Level_5_Manual_Annotation.svg&quot;</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">unionizes</span> <span class="o">=</span> <span class="p">[];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Update the title of the page to reflect the gene and stage it depicts.
+Also provide a link to a side-by-side view of the reference space
+for this stage and the data set being visualized.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">downloadDataSetInfo</span><span class="p">(</span><span class="nx">dataSetId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dataSets</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">dataSet</span> <span class="o">=</span> <span class="nx">dataSets</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="kd">var</span> <span class="nx">age</span> <span class="o">=</span> <span class="nx">dataSet</span><span class="p">.</span><span class="nx">specimen</span><span class="p">.</span><span class="nx">donor</span><span class="p">.</span><span class="nx">age</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">gene</span> <span class="o">=</span> <span class="nx">dataSet</span><span class="p">.</span><span class="nx">genes</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="kd">var</span> <span class="nx">refId</span> <span class="o">=</span> <span class="nx">ageDataSetMap</span><span class="p">[</span><span class="nx">age</span><span class="p">];</span>
+  <span class="kd">var</span> <span class="nx">href</span> <span class="o">=</span> <span class="s2">&quot;http://developingmouse.brain-map.org/data/compare/ivt.html?ispopup=true&amp;include=&quot;</span><span class="o">+</span><span class="nx">refId</span><span class="o">+</span><span class="s2">&quot;,&quot;</span><span class="o">+</span><span class="nx">dataSetId</span><span class="p">;</span>	
+
+  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#title&#39;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;h3&gt;&#39;</span><span class="p">)</span>
+             <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;Expression for &lt;a href=&#39;&quot;</span><span class="o">+</span><span class="nx">href</span><span class="o">+</span><span class="s2">&quot;&#39;&gt;&quot;</span> <span class="o">+</span> <span class="nx">gene</span><span class="p">.</span><span class="nx">acronym</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span> <span class="o">+</span> <span class="nx">age</span> <span class="o">+</span> <span class="s2">&quot;)&lt;/a&gt;&quot;</span><span class="p">));</span>
+<span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Load the SVG file for the developing mouse ISH data.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">svgFile</span><span class="p">,</span> <span class="p">{</span> <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">status</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">)</span> <span class="p">{</span> </pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Embed the SVG into the structure and energy visualizations. The strange
+<code>or</code> statement below makes this work in IE9.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energySvg&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">xml</span> <span class="o">||</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>The SVGs have colors, but they do not match the current reference atlas
+colors.  We&rsquo;ll pull these out of the API shortly, but until then fill
+with a default.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#energySvg #Polygons path&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Figure out which acronyms are represented in the structure SVG.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">acronymList</span> <span class="o">=</span> <span class="nx">extractAcronyms</span><span class="p">(</span><span class="s2">&quot;energySvg&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Download the entries of the <code>StructureUnionize</code> table for structures in 
+the acronym list.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">downloadUnionizes</span><span class="p">(</span><span class="nx">acronymList</span><span class="p">,</span> <span class="nx">dataSetId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">rows</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>Update the global list of unionize rows and redraw energy diagram.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">unionizes</span> <span class="o">=</span> <span class="nx">rows</span><span class="p">;</span>
+    <span class="nx">updateEnergy</span><span class="p">();</span>
+  <span class="p">});</span>
+<span class="p">}});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Download the SVG file for the manual annotation data.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">maSvgFile</span><span class="p">,</span> <span class="p">{</span> <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">status</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">)</span> <span class="p">{</span> </pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Embed the SVG into the intensity, density, and pattern visualizations. 
+The strange <code>or</code> statement below makes this work in IE9.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#structureSvg&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">xml</span> <span class="o">||</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">);</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#intensitySvg&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">xml</span> <span class="o">||</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">);</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#densitySvg&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">xml</span> <span class="o">||</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">);</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#patternSvg&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">xml</span> <span class="o">||</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>The SVGs have colors, but we&rsquo;re going to overwrite them with annotation
+colors shortly.  Until then fill with a default.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#structureSvg #Polygons path&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;white&#39;</span><span class="p">);;</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#intensitySvg #Polygons path&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">);</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#densitySvg #Polygons path&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">);</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#patternSvg #Polygons path&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Figure out which acronyms are represented in the intensity SVG.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">acronymList</span> <span class="o">=</span> <span class="nx">extractAcronyms</span><span class="p">(</span><span class="s2">&quot;structureSvg&quot;</span><span class="p">);</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Download the annotation data for structures in the acronym list.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">downloadAnnotations</span><span class="p">(</span><span class="nx">acronymList</span><span class="p">,</span> <span class="nx">dataSetId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">annotations</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">annotations</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">annotation</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Set the intensity color for this structure. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">selectPath</span><span class="p">(</span><span class="s1">&#39;intensitySvg&#39;</span><span class="p">,</span> <span class="nx">annotation</span><span class="p">.</span><span class="nx">structure</span><span class="p">.</span><span class="nx">acronym</span><span class="p">);</span>
+      <span class="nx">path</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span> <span class="nx">intensityScale</span><span class="p">(</span><span class="nx">annotation</span><span class="p">.</span><span class="nx">intensity_call</span><span class="p">));</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>Set the density color for this structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="nx">path</span> <span class="o">=</span> <span class="nx">selectPath</span><span class="p">(</span><span class="s1">&#39;densitySvg&#39;</span><span class="p">,</span> <span class="nx">annotation</span><span class="p">.</span><span class="nx">structure</span><span class="p">.</span><span class="nx">acronym</span><span class="p">);</span>
+      <span class="nx">path</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span> <span class="nx">densityScale</span><span class="p">(</span><span class="nx">annotation</span><span class="p">.</span><span class="nx">density_call</span><span class="p">));</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>Set the pattern color for this structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="nx">path</span> <span class="o">=</span> <span class="nx">selectPath</span><span class="p">(</span><span class="s1">&#39;patternSvg&#39;</span><span class="p">,</span> <span class="nx">annotation</span><span class="p">.</span><span class="nx">structure</span><span class="p">.</span><span class="nx">acronym</span><span class="p">);</span>
+      <span class="nx">path</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span> <span class="nx">patternScale</span><span class="p">(</span><span class="nx">annotation</span><span class="p">.</span><span class="nx">pattern_call</span><span class="p">));</span>
+    <span class="p">});</span>
+  <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>Download all of the developing mouse structure meta data for structures
+in the acronym list.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">downloadStructures</span><span class="p">(</span><span class="nx">acronymList</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">structures</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>For each structure, identify the corresponding SVG path(s) and set 
+the background fill color.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">structures</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">structure</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">selectPath</span><span class="p">(</span><span class="s2">&quot;structureSvg&quot;</span><span class="p">,</span> <span class="nx">structure</span><span class="p">.</span><span class="nx">acronym</span><span class="p">);</span>
+      <span class="nx">path</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span><span class="s1">&#39;#&#39;</span><span class="o">+</span><span class="nx">structure</span><span class="p">.</span><span class="nx">color_hex_triplet</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>The manual annotation diagrams all have legends with the same format.
+Build a list of them then construct the legends.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">legends</span> <span class="o">=</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">container</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#densityLegend&quot;</span><span class="p">),</span> <span class="nx">scale</span><span class="o">:</span> <span class="nx">densityScale</span> <span class="p">},</span>
+          <span class="p">{</span> <span class="nx">container</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#intensityLegend&quot;</span><span class="p">),</span> <span class="nx">scale</span><span class="o">:</span> <span class="nx">intensityScale</span> <span class="p">},</span>
+          <span class="p">{</span> <span class="nx">container</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#patternLegend&quot;</span><span class="p">),</span> <span class="nx">scale</span><span class="o">:</span> <span class="nx">patternScale</span> <span class="p">}</span> <span class="p">];</span>
+
+  <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">legends</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">legend</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">legend</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">j</span><span class="p">,</span> <span class="nx">call</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-26'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-26">&#182;</a>
+        </div>
+        <p>Add an empty colored box with an adjacent text description.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="nx">legend</span><span class="p">.</span><span class="nx">container</span>
+        <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;span&gt;&#39;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s1">&#39;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&#39;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;background&#39;</span><span class="p">,</span> <span class="nx">legend</span><span class="p">.</span><span class="nx">scale</span><span class="p">(</span><span class="nx">call</span><span class="p">))</span>
+            <span class="p">.</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;legendColor&#39;</span><span class="p">))</span>
+        <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;span&gt;&#39;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">call</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;legendLabel&#39;</span><span class="p">));</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">}});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-27'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-27">&#182;</a>
+        </div>
+        <p>For every row in the global unionize row list, update the corresponding
+structure in the energy SVG.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">updateEnergy</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">unionizes</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">unionize</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">selectPath</span><span class="p">(</span><span class="s1">&#39;energySvg&#39;</span><span class="p">,</span> <span class="nx">unionize</span><span class="p">.</span><span class="nx">structure</span><span class="p">.</span><span class="nx">acronym</span><span class="p">);</span>
+    <span class="nx">path</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;fill&#39;</span><span class="p">,</span> <span class="nx">energyScale</span><span class="p">(</span><span class="nx">unionize</span><span class="p">.</span><span class="nx">expression_energy</span><span class="p">));</span>
+  <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-28'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-28">&#182;</a>
+        </div>
+        <p>Find the SVG path element whose ID is a particular structure acronym.
+Occasionally a structure must be split into two polygons even though path 
+IDs must be unique, so a suffix is appended onto the end of the ID. The 
+suffix has the format &ldquo;acronym<em>1</em>&rdquo;, so we have to a slightly complicated 
+select that ignores the suffix when doing the search.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">selectPath</span><span class="p">(</span><span class="nx">svgId</span><span class="p">,</span> <span class="nx">acronym</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#&#39;</span> <span class="o">+</span> <span class="nx">svgId</span> <span class="o">+</span> <span class="s2">&quot; path&quot;</span><span class="p">).</span><span class="nx">filter</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">acronym</span> <span class="o">==</span> <span class="k">this</span><span class="p">.</span><span class="nx">id</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/_.*/</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+  <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-29'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-29">&#182;</a>
+        </div>
+        <p>Build an array of structure acronyms found within the structure polygons
+in a single SVG.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">extractAcronyms</span><span class="p">(</span><span class="nx">svgId</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">acronymList</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="o">+</span><span class="nx">svgId</span><span class="o">+</span><span class="s2">&quot; #Polygons path&quot;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">path</span><span class="p">)</span> <span class="p">{</span> 
+    <span class="nx">acronymList</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span> 
+  <span class="p">});</span>
+  <span class="k">return</span> <span class="nx">acronymList</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-30'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-30">&#182;</a>
+        </div>
+        <p>Download entries of the <code>Structure</code> table with a given set of acronyms.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">downloadStructures</span><span class="p">(</span><span class="nx">acronyms</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">acronymList</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="nx">acronyms</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">;</span>
+
+  <span class="kd">var</span> <span class="nx">queryPath</span> <span class="o">=</span> <span class="s2">&quot;data/Structure/query.json&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;?criteria=[acronym$in&quot;</span> <span class="o">+</span> <span class="nx">acronymList</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">queryPath</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-31'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-31">&#182;</a>
+        </div>
+        <p>Download entries in the <code>StructureUnionize</code> table with a given set of acronyms.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">downloadUnionizes</span><span class="p">(</span><span class="nx">acronyms</span><span class="p">,</span> <span class="nx">dataSetId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">acronymList</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="nx">acronyms</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">;</span>
+
+  <span class="kd">var</span> <span class="nx">queryPath</span> <span class="o">=</span> <span class="s2">&quot;data/StructureUnionize/query.json&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;?include=structure[acronym$in&quot;</span> <span class="o">+</span> <span class="nx">acronymList</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;&amp;criteria=[section_data_set_id$eq&quot;</span> <span class="o">+</span> <span class="nx">dataSetId</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">queryPath</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-32'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-32">&#182;</a>
+        </div>
+        <p>Download meta information for a data set.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">downloadDataSetInfo</span><span class="p">(</span><span class="nx">dataSetId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">queryPath</span> <span class="o">=</span> <span class="s2">&quot;data/SectionDataSet/&quot;</span> <span class="o">+</span> <span class="nx">dataSetId</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;?include=specimen(donor(age)),genes&quot;</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">queryPath</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-33'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-33">&#182;</a>
+        </div>
+        <p>Download entries in the <code>ManualAnnotation</code> table with a given set of acronyms.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">downloadAnnotations</span><span class="p">(</span><span class="nx">acronyms</span><span class="p">,</span> <span class="nx">dataSetId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">acronymList</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="nx">acronyms</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">;</span>
+
+  <span class="kd">var</span> <span class="nx">queryPath</span> <span class="o">=</span> <span class="s2">&quot;data/ManualAnnotation/query.json?&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;criteria=[intensity_call$ne&#39;&#39;],&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;[section_data_set_id$eq&quot;</span> <span class="o">+</span> <span class="nx">dataSetId</span> <span class="o">+</span> <span class="s2">&quot;]&amp;&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;include=structure[acronym$in&quot;</span> <span class="o">+</span> <span class="nx">acronymList</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">queryPath</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-34'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-34">&#182;</a>
+        </div>
+        <p>Make an API query.  You can&rsquo;t actually request all result rows of a query
+at one time.  This function takes care of appending all of the pages of
+results together.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="kd">var</span> <span class="nx">num_rows</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">total_rows</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+  <span class="nx">apiPageQuery</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-35'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-35">&#182;</a>
+        </div>
+        <p>Make the actual query.  Keep downloading more rows until they have 
+all been retrieved.  All API queries return the total number of rows
+in the request, so we have to make a request before we can find out
+how many rows will be in it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">apiPageQuery</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="nx">path</span> <span class="o">+</span> 
+      <span class="s2">&quot;&amp;start_row=&quot;</span> <span class="o">+</span> <span class="nx">rows</span><span class="p">.</span><span class="nx">length</span> <span class="o">+</span>
+      <span class="s2">&quot;&amp;num_rows=&quot;</span> <span class="o">+</span> <span class="nx">num_rows</span><span class="p">;</span>
+
+    <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="p">{</span>
+      <span class="nx">crossDomain</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-36'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-36">&#182;</a>
+        </div>
+        <p>On Chrome, the response is already a javascript object. 
+On IE/Firefox, it comes back as a string.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span><span class="p">)</span> 
+          <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">response</span><span class="p">);</span>						
+
+        <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">rows</span><span class="p">.</span><span class="nx">push</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">rows</span><span class="p">,</span> <span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">);</span>
+          <span class="nx">total_rows</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">total_rows</span><span class="p">);</span>
+          
+          <span class="k">if</span> <span class="p">(</span><span class="nx">total_rows</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="nb">isNaN</span><span class="p">(</span><span class="nx">total_rows</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">apiError</span><span class="p">(</span><span class="s2">&quot;total_rows incorrect&quot;</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">rows</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;=</span> <span class="nx">total_rows</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">onsuccess</span><span class="p">(</span><span class="nx">rows</span><span class="p">);</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">apiPageQuery</span><span class="p">();</span>
+          <span class="p">}</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">},</span>
+      <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-37'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-37">&#182;</a>
+        </div>
+        <p>If something goes wrong, alert the user.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">function</span> <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="kd">var</span> <span class="nx">errorHtml</span> <span class="o">=</span> 
+      <span class="s2">&quot;&lt;p&gt;There was an error with the following query:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">url</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;Error message:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+      <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">response</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span><span class="p">;</span>
+    
+    <span class="kd">var</span> <span class="nx">dialog</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">);</span>
+    
+    <span class="kd">var</span> <span class="nx">existingErrors</span> <span class="o">=</span> <span class="nx">dialog</span><span class="p">.</span><span class="nx">html</span><span class="p">();</span>
+    
+    <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">)</span>
+      <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">existingErrors</span> <span class="o">+</span> <span class="nx">errorHtml</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">dialog</span><span class="p">({</span>
+        <span class="nx">width</span><span class="o">:</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="nx">height</span><span class="o">:</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="nx">modal</span><span class="o">:</span> <span class="kc">true</span>
+      <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-38'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-38">&#182;</a>
+        </div>
+        <p>This function splits the URL parameter string into a javascript hash.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">getUrlVars</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">vars</span> <span class="o">=</span> <span class="p">[],</span> <span class="nx">hash</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">hashes</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
+  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">hashes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nx">hash</span> <span class="o">=</span> <span class="nx">hashes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
+    <span class="nx">vars</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="nx">vars</span><span class="p">[</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nx">hash</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">vars</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

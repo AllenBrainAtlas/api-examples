@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title> Manual Annotation </title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="../d3/d3.js"></script>
+    <script type="text/javascript" src="../d3/d3.layout.js"></script>
+	<script type="text/javascript" src="../javascripts/jquery.ie.cors.js"></script>
+	<script type="text/javascript" src="../javascripts/modernizr.svg.js"></script>
+    <style type="text/css">
+
+	  #temporarySpacer {
+	  clear:both;
+	  width:1px;
+	  height:1000px;
+	  }
+
+	  #energyLowerLabel {
+	  float: left;
+	  width: 50px;
+	  margin: 0px 5px;
+	  text-align: center;
+	  border: 1px solid #DDD;
+	  }
+
+	  #energyUpperLabel {
+	  float: left;
+	  width: 50px;
+	  margin: 0px 5px;
+	  text-align: center;
+	  background: red;
+	  border: 1px solid #DDD;
+	  }
+
+	  #energySlider {
+	  float: left;
+	  width: 400px;
+	  height: 20px;
+	  }
+
+	  #energyText { float: left; }
+
+	  #title {
+	  text-align: center;
+	  width: 1100px;
+	  }
+
+	  .ui-slider-handle {
+	  width: 5px !important;
+	  height: 24px !important;
+	  margin-left: -2.5px !important;
+	  }
+
+	  .ui-slider-range {
+	  background: #FAA !important;
+	  }
+
+	  #maDescription {
+	  width: 1100px;
+	  }
+
+	  #maContent {
+	  width: 1100px;
+	  }
+	  
+	  .svgContainer {
+	  float: left;
+	  padding-bottom: 20px;
+	  }
+	  
+	  .legendLabel {
+	  margin-right: 15px;
+	  margin-left: 4px;
+	  }
+
+	  .legendColor {
+	  border: 1px solid #DDD;
+	  }
+
+	  .svgTitle {
+	  text-align: center;
+	  }
+
+    </style>
+  </head>
+  <body>
+	<h1> Manual Annotation </h1>
+
+	<div id="errorDialog" title="API Query Error"></div>
+
+	<div id="maDescription">
+
+		<p> A subset of the developing mouse ISH data was manually annotated to describe intensity and pattern
+		  of expression.  This example demonstrates how to retrieve manually annotated data and understand it
+		  in the context of developing mouse ontology structures. </p>
+		
+		<p>The diagrams on this page were drawn to represent the level 5 developing 
+		  mouse brain structures. This example downloads the manual annotation data for a single gene at one
+		  developmental stage and colors structures according to their intensity, density, and 
+		  pattern. To recompute these diagrams for a different gene and developmental stage, append a 
+		  <tt>dataSetId</tt> parameter to this URL.  For example: 
+		  <a href="../manannot/index.html?dataSetId=100076691">try data set 100076691</a>. </p>
+		
+		<p>For comparison, a separate diagram colored by structure expression energy values pulled from the 
+		  <tt>StructureUnionize</tt> table of the API has also been included.  Expression energy is value computed 
+		  after automatically analyzing the magnitude of expression in ISH images. <p>
+	</div>
+
+	<h2 id="title"></h2>
+
+	<div id="maContent">
+
+	  <div class="svgContainer">
+		<h3 class="svgTitle"> Structure Colors </h3>
+		<div id="structureSvg"></div>
+	  </div>
+
+	  <div class="svgContainer">
+		<h3 class="svgTitle"> Manual Annotation Intensity </h3>
+		<div id="intensitySvg"></div>
+		<div id="intensityLegend"></div>
+	  </div>
+
+	  <div style="clear:both"></div>
+
+	  <div class="svgContainer">
+		<h3 class="svgTitle"> Manual Annotation Density </h3>
+		<div id="densitySvg"></div>
+		<div id="densityLegend"></div>
+	  </div>
+
+	  <div class="svgContainer">
+		<h3 class="svgTitle"> Manual Annotation Pattern </h3>
+		<div id="patternSvg"></div>
+		<div id="patternLegend"></div>
+	  </div>
+
+	  <div style="clear:both"></div>
+	  
+      <div class="svgContainer">	  
+		<h3 class="svgTitle"> Expression Energy </h3>
+		
+		<div id="energySvg"> </div>
+		<div id="energyLegend">
+		  <div id="energyLowerLabel"></div>
+		  <div id="energySlider"></div>
+		  <div id="energyUpperLabel"></div>
+		  <div style="clear:both"></div>
+		</div>
+	  </div>
+
+	  <div style="clear:both"></div>
+	  
+	  <h4> Documentation and Resources</h4>
+	  
+	  <p> <a href="../doc/manannot/manannot.js.html">manannot.js</a>: Data importing and page layout documentation. </p>
+	  <p> <a href="../doc/manannot/javascripts/jquery.ie.cors.js.html">jquery.ie.cors.js</a>: Script enabling cross-origin AJAX requests in IE8 and IE9. </p>
+	  <p> <a href="../doc/manannot/javascripts/modernizr.svg.js.html">modernizr.svg.js</a>: Script detects if the browser supports SVG. </p>
+	  <p> <a href="../manannot/manannot.tar.gz">manannot.tar.gz</a>: Archived source code. </p>
+	  <p> <a href="../" id="homeButton">back to examples list</a> </p>
+	  
+	  <script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+	</div>
+  </body>
+  <script type="text/javascript" src="../manannot/manannot.js"></script>
+</html>

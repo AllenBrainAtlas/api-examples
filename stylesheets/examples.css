@@ -1,0 +1,64 @@
+html {
+	font-family: Arial,Helvetica,sans-serif;
+}
+
+#content {
+	position: relative;
+	width: 1024px;
+	padding: 5px;
+}
+
+#chart {
+	position: absolute;
+	width: 650px;
+	height: 650px;
+}
+
+#description {
+	position: absolute;
+	top: 0px;
+	left: 660px;
+	width: 350px; 
+}
+
+#documentation {
+	position: absolute;
+	top: 650px;
+	width: 1024px;
+	z-index: -1;
+}
+
+#documentation table {
+	border-spacing: 5px;
+}
+
+#pFooter {
+	clear: both;
+}
+
+#visProperties {
+	border-spacing: 0px 10px;
+}
+
+#visProperties .hrule {
+	background: #eee;
+	padding: 1px;
+}
+
+.ui-widget {
+	font-size: 10px;
+}
+
+.label {
+
+}
+
+#svgTable td {
+	text-align: center
+}
+
+.svgError {
+	color: red;
+	top: 50%;
+	position: absolute;
+}

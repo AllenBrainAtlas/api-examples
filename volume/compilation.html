@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Expression Volume Demonstration</title>
+	<style type="text/css">
+	  html { 
+	  font-family: Arial,Helvetica,sans-serif;
+	  }
+
+	  p {
+	  width: 600px;
+	  }
+	</style>
+  </head>
+  <body>
+	<h2> Pre-requisites </h2>
+	
+	<h3> 1. Qt </h3>
+	
+	<p> Qt is a cross-platform, open source application developing toolkit
+	  that makes user interface development in C++ relatively simple.  Download
+	  the latest <a href="http://qt.nokia.com/downloads">Qt libraries</a> for
+	  your compiler of choice. You  may download the SDK if you wish, but note 
+	  that the Windows SDK comes with MingW binaries only.</p> 
+
+	<h3> 2. CMake </h3>
+
+	<p> CMake is a build tool that makes cross-platform project organization
+	  simpler.  You create a single project description (<tt>CMakeLists.txt</tt>)
+	  and CMake will generate a compiler-specific project specification from 
+	  there.  Download the <a href="http://www.cmake.org/cmake/resources/software.html">latest version</a>.</p>
+
+	<h3> 3. VTK </h3>
+
+	<p> VTK is a C++ visualization library that has a large set of visualization
+	  techniques available.  To compile VTK with Qt support, first download the VTK 
+	  <a href="http://vtk.org/VTK/resources/software.html">source code</a> (not
+	  the installer) and unzip to a directory of your choice.  Create a build
+	  directory outside of the source code directory. You now have two directories,
+	  for example:</p>
+	
+	<ul>
+	  <li> <tt> C:\Code\VTK\VTK-5.8.0 </tt> </li>
+	  <li> <tt> C:\Code\VTK\Build-5.8.0 </tt> </li>
+	</ul>
+
+	<p> Run the CMake GUI and give it the paths to your source and build 
+	  directories. Click "configure".  In Windows, you will need to now 
+	  indicate which compiler you will use.  When this is finished, ou 
+	  will need to update two build options:  </p>
+
+	<ul>
+	  <li> <tt> BUILD_SHARED_LIBRARIES = On </tt> </li>
+	  <li> <tt> VTK_USE_QT = On </tt> </li>
+	</ul>
+
+	<p> Click "configure".  CMake will run for awhile and then report that it
+	  cannot locate the Qt libraries.  You will now need to update a third
+	  build option to indicate the path of qmake, which comes with Qt.  
+	  For example:</p>
+
+	<ul>
+	  <li> <tt> QT_QMAKE_EXECUTABLE = C:\Qt\4.8.0\bin\qmake.exe </tt> </li>
+	</ul>	
+
+	<p> Click "configure" again.  When this is done, click "generate" to 
+	  generate, for example, your Visual Studio solution file. Using the
+	  example paths we used before, you will find that file here:</p>
+	  
+	<ul>
+	  <li> <tt> C:\Code\VTK\Build-5.8.0\VTK.sln </tt> </li>
+	</ul>
+
+	<p> You can now build VTK as you would any other C++ project with your 
+	  compiler. Where applicable, select the Release build configuration.</p>
+
+	<h2> Compilation </h2>
+
+	<p> The example code can be compiled with CMake.  Download the source archive
+	  and unarchive it into a directory of your choice.  Create a build directory
+	  somewhere outside of the build directory.  For example: </p>
+
+	<ul>
+	  <li> <tt> C:\Code\VolumeDemo\src </tt> </li>
+	  <li> <tt> C:\Code\VolumeDemo\bin </tt> </li>
+	</ul>
+
+	<p> When running CMake, you will only need to update the <tt>VTK_DIR</tt> 
+	  option to point to the <em>build</em> directory of VTK.  For 
+	  example:</p>
+
+	<ul>
+	  <li> <tt> VTK_DIR = C:\Code\VTK\Build-5.8.0 </tt> </li>
+	</ul>
+
+	<p> After compiling the resulting project, you should have an executable
+	  named <tt>VolumeDemoApp</tt>.  To run this application, all of the
+	  related dynamic library files must be available in your environment
+	  <tt>PATH</tt>. Specifically, this means that the Qt and VTK binary 
+	  directories must be added to your <tt>PATH</tt>.  For example:</p>
+
+	<ul>
+	  <li> <tt> C:\Qt\4.8.0\bin </tt> </li>
+	  <li> <tt> C:\Code\VTK\Build-5.8.0 </tt> </li>
+	</ul>	
+
+	<p> Alternatively, but less desirably, copy all of the dll/dylib/so 
+	  files from the above directories into the directory containing the
+	  VolumeDemoApp executable.</p>
+
+  </body>
+</html>

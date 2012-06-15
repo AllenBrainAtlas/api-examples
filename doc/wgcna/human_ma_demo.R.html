@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>human_ma_demo.R</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="api.R.html">api.R</a>
+          <a class="source" href="human_ma_demo.R.html">human_ma_demo.R</a>
+          <a class="source" href="preprocessData.R.html">preprocessData.R</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>human_ma_demo.R</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This script loads an R object computed via the <code>preprocessData</code> method and runs
+a standard Weighted Gene Co-expression Network Analysis on it.  This involves
+clustering probes based on their correlation scores into modules.  First, make 
+sure the necessary libraries are loaded.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>library<span class="p">(</span>WGCNA<span class="p">)</span>
+library<span class="p">(</span>RJSONIO<span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Load the preprocessed R data for donor 9861.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>load<span class="p">(</span><span class="s">&quot;9861.RData&quot;</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>WGCNA recommends applying a soft threshold to the correlation matrix used for
+network analysis.  The following code will help pick a soft threshold, the output
+of which led to choosing a power of 10.<br>
+    powers = c(6,7,8,9,10,11,12,13,14)
+    pickSoftThreshold(datExpr,networkType=&ldquo;signed&rdquo;,powerVector=powers)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>thresholdPower <span class="o">=</span> <span class="m">10</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Run the <code>blockwiseModules</code> method, which does all of the WGCNA analysis in one step.
+The data set is very large, so the analysis will require at least 6GB of memory.
+<code>blockwiseModules</code> can be run on separate blocks of genes, however after parallel 
+analysis it must attempt to merge the modules it finds together.  For simplicity, 
+the following takes a random 10000 genes and runs <code>blockwiseModules</code> on all of those 
+genes at once.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>numRows <span class="o">=</span> <span class="m">10000</span>
+datExprR <span class="o">=</span> datExpr<span class="p">[</span>sample<span class="p">(</span><span class="m">1</span>:nrow<span class="p">(</span>datExpr<span class="p">),</span> numRows<span class="p">,</span> replace<span class="o">=</span><span class="kc">FALSE</span><span class="p">),]</span>
+net <span class="o">=</span> blockwiseModules<span class="p">(</span>t<span class="p">(</span>datExprR<span class="p">),</span>power<span class="o">=</span>thresholdPower<span class="p">,</span>networkType<span class="o">=</span><span class="s">&quot;signed&quot;</span><span class="p">,</span>maxBlockSize<span class="o">=</span>numRows<span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Plot the cluster results.  The plot will show a dendrogram resulting from agglomerative gene
+clustering.  That dendrogram is then segmented into modules, the colors of which are 
+shown below the dendrogram.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>moduleColorsAutomatic <span class="o">=</span> labels2colors<span class="p">(</span>net<span class="p">$</span>colors<span class="p">)</span>
+mColors <span class="o">=</span> moduleColorsAutomatic<span class="p">[</span>net<span class="p">$</span>blockGenes<span class="p">[[</span><span class="m">1</span><span class="p">]]]</span>
+
+x11<span class="p">()</span>
+plotDendroAndColors<span class="p">(</span>net<span class="p">$</span>dendrograms<span class="p">[[</span><span class="m">1</span><span class="p">]],</span> colors<span class="o">=</span>mColors<span class="p">,</span> dendroLabels<span class="o">=</span><span class="kc">FALSE</span><span class="p">,</span> 
+                    groupLabels<span class="o">=</span>c<span class="p">(</span><span class="s">&quot;Module colors&quot;</span><span class="p">),</span> addGuide<span class="o">=</span><span class="kc">TRUE</span><span class="p">,</span>
+                    main<span class="o">=</span><span class="s">&quot;H0351.2001 Cluster Dendrogram&quot;</span><span class="p">)</span>
+                             </pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Plot the principal module eigengene.  This is the expression pattern that represents 
+the majority of the variance within the data.  In this case, it roughly depicts 
+differential expression between cortical and subcortical structures.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>module <span class="o">=</span> <span class="m">1</span>
+me <span class="o">=</span> net<span class="p">$</span>MEs<span class="p">[[</span>module<span class="p">]]</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Sort the downloaded order values to build a sample index order.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>order <span class="o">=</span> order<span class="p">(</span>sampleInfo<span class="p">$</span>order<span class="p">)</span>
+color <span class="o">=</span> sampleInfo<span class="p">$</span>color</pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Generate the plot.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>x11<span class="p">()</span>
+barplot<span class="p">(</span>me<span class="p">[</span>order<span class="p">],</span> col<span class="o">=</span>color<span class="p">[</span>order<span class="p">],</span> border<span class="o">=</span><span class="kc">NA</span><span class="p">,</span> 
+        main<span class="o">=</span><span class="s">&quot;First Module Eigengene Expression Pattern&quot;</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Save both figures to a PDF as well.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>pdf<span class="p">(</span><span class="s">&quot;9861.pdf&quot;</span><span class="p">,</span> width<span class="o">=</span><span class="m">6</span><span class="p">,</span> height<span class="o">=</span><span class="m">3</span><span class="p">,</span> pointsize<span class="o">=</span><span class="m">8</span><span class="p">)</span>
+
+plotDendroAndColors<span class="p">(</span>net<span class="p">$</span>dendrograms<span class="p">[[</span><span class="m">1</span><span class="p">]],</span> colors<span class="o">=</span>mColors<span class="p">,</span> dendroLabels<span class="o">=</span><span class="kc">FALSE</span><span class="p">,</span> 
+                    groupLabels<span class="o">=</span>c<span class="p">(</span><span class="s">&quot;Module colors&quot;</span><span class="p">),</span> addGuide<span class="o">=</span><span class="kc">TRUE</span><span class="p">,</span>
+                    main<span class="o">=</span><span class="s">&quot;H0351.2001 Cluster Dendrogram&quot;</span><span class="p">)</span>
+                    
+barplot<span class="p">(</span>me<span class="p">[</span>order<span class="p">],</span> col<span class="o">=</span>color<span class="p">[</span>order<span class="p">],</span> border<span class="o">=</span><span class="kc">NA</span><span class="p">,</span> 
+        main<span class="o">=</span><span class="s">&quot;First Module Eigengene Expression Pattern&quot;</span><span class="p">)</span>
+        
+dev.off<span class="p">()</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>foldchange.py</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>foldchange.py</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This demonstrates how to load two raw expression energy volumes and their
+corresponding reference volume and compute the fold change between the 
+volumes on a per-structure basis.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kn">import</span> <span class="nn">array</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">zipfile</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>These are hard-coded paths to URLs for downloading expression volumes.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">API_SERVER</span> <span class="o">=</span> <span class="s">&quot;http://api.brain-map.org/&quot;</span>
+<span class="n">API_DATA_PATH</span> <span class="o">=</span> <span class="n">API_SERVER</span> <span class="o">+</span> <span class="s">&quot;api/v2/data/&quot;</span>
+
+<span class="n">STRUCTURE_GRAPH_ID</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">REFERENCE_SPACE_ID</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">STRUCTURES_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/OntologyNode/query.json?&quot;</span> <span class="o">+</span>\
+                      <span class="s">&quot;criteria=[structure_graph_id$eq</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">)</span> \
+                      <span class="o">%</span> <span class="p">(</span><span class="n">API_DATA_PATH</span><span class="p">,</span> <span class="n">STRUCTURE_GRAPH_ID</span><span class="p">)</span>
+
+<span class="n">REFERENCE_SPACE_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/ReferenceSpace/query.json?criteria=[id$eq</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">+</span> \
+                          <span class="s">&quot;&amp;include=well_known_files[path$li&#39;*gridAnnotation.zip&#39;]&quot;</span> <span class="p">)</span> \
+                          <span class="o">%</span> <span class="p">(</span><span class="n">API_DATA_PATH</span><span class="p">,</span> <span class="n">REFERENCE_SPACE_ID</span><span class="p">)</span>
+
+<span class="n">GRID_FMT</span> <span class="o">=</span> <span class="n">API_SERVER</span> <span class="o">+</span> <span class="s">&quot;grid_data/download/</span><span class="si">%d</span><span class="s">&quot;</span>
+
+<span class="n">DEFAULTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;sourceId&quot;</span><span class="p">:</span> <span class="mi">69855739</span><span class="p">,</span>
+    <span class="s">&quot;targetId&quot;</span><span class="p">:</span> <span class="mi">70813257</span><span class="p">,</span>
+    <span class="s">&quot;csv&quot;</span><span class="p">:</span> <span class="s">&quot;foldchange.csv&quot;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Download a grid file from the URL above by substituting in the data set id 
+argument.  Grid files are .zip files that will be downloaded to a 
+temporary location, where it can be unzipped into memory using the zipfile
+module.  The raw volume is converted into a flat array of floats.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadGridFile</span><span class="p">(</span><span class="n">dataSetId</span><span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">GRID_FMT</span> <span class="o">%</span> <span class="p">(</span><span class="n">dataSetId</span><span class="p">)</span>
+    <span class="n">fh</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+    <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">fh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">header</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;energy.mhd&#39;</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;energy.raw&#39;</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;f&#39;</span><span class="p">,</span><span class="n">raw</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">header</span><span class="p">,</span><span class="n">arr</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Make a query to the API via a URL.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">QueryAPI</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="n">start_row</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_rows</span> <span class="o">=</span> <span class="mi">2000</span>
+    <span class="n">total_rows</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>the ontology has to be downloaded in pages, since the API will not return
+more than 2000 rows at once.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">pagedUrl</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s">&#39;&amp;start_row=</span><span class="si">%d</span><span class="s">&amp;num_rows=</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">start_row</span><span class="p">,</span><span class="n">num_rows</span><span class="p">)</span>
+
+        <span class="k">print</span> <span class="n">pagedUrl</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">pagedUrl</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">total_rows</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total_rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;total_rows&#39;</span><span class="p">])</span>
+
+        <span class="n">start_row</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;msg&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">start_row</span> <span class="o">&gt;=</span> <span class="n">total_rows</span><span class="p">:</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="n">rows</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Download reference space meta information from the API.  Specifically, this 
+is looking for the download link to the zip file containing an annotation
+volume at the same resolution as the grid files.  Then, download the
+link, unzip the archive, and return the raw grid annotation volume as an array 
+of unsigned shorts (type <code>H</code>).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadAnnotationVolume</span><span class="p">():</span>
+    <span class="n">refspace</span> <span class="o">=</span> <span class="n">QueryAPI</span><span class="p">(</span><span class="n">REFERENCE_SPACE_URL</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">reffile</span> <span class="o">=</span> <span class="n">refspace</span><span class="p">[</span><span class="s">&#39;well_known_files&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">fh</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">API_SERVER</span> <span class="o">+</span> <span class="n">reffile</span><span class="p">[</span><span class="s">&quot;download_link&quot;</span><span class="p">])</span>
+    <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">fh</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">&#39;gridAnnotation/gridAnnotation.raw&#39;</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;H&#39;</span><span class="p">,</span><span class="n">raw</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">arr</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Download the ontology from the API.  This is a flat list of structures.
+We also download a list of parent-child relationships from the 
+StructureGraph model and use those to build a navigable tree hash.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">DownloadOntology</span><span class="p">():</span>
+    <span class="n">structures</span> <span class="o">=</span> <span class="n">QueryAPI</span><span class="p">(</span><span class="n">STRUCTURES_URL</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Build a hash from structure id to structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">structureHash</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">structures</span><span class="p">)):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">structures</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;sum1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;volume1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;sum2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;volume2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">structureHash</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">s</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Make it a bit clearer who the parent of this structure is.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">for</span> <span class="n">sid</span><span class="p">,</span><span class="n">s</span> <span class="ow">in</span> <span class="n">structureHash</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">structureHash</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">2</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">structureHash</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>Iterate through the voxels and sum up the expression values for each 
+structure. This is performed recursively up the ontology in what we usually
+call unionization.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">UnionizeStructures</span><span class="p">(</span><span class="n">arr1</span><span class="p">,</span><span class="n">arr2</span><span class="p">,</span><span class="n">annot</span><span class="p">,</span><span class="n">structures</span><span class="p">):</span>
+    <span class="n">nvoxels</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr1</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">nvoxels</span><span class="p">):</span>
+        <span class="n">structureId</span> <span class="o">=</span> <span class="n">annot</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">structures</span><span class="p">[</span><span class="n">structureId</span><span class="p">]</span>
+            <span class="k">while</span> <span class="n">node</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arr1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">node</span><span class="p">[</span><span class="s">&#39;sum1&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">arr1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">node</span><span class="p">[</span><span class="s">&#39;volume1&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    
+                <span class="k">if</span> <span class="n">arr2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">node</span><span class="p">[</span><span class="s">&#39;sum2&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">arr2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">node</span><span class="p">[</span><span class="s">&#39;volume2&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Compute fold change, which is defined as the ratio of the mean expression 
+of two genes within a structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">def</span> <span class="nf">ComputeFoldChange</span><span class="p">(</span><span class="n">structures</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">structures</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">mean1</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;sum1&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">v</span><span class="p">[</span><span class="s">&#39;volume1&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;volume1&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">mean2</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;sum2&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">v</span><span class="p">[</span><span class="s">&#39;volume2&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;volume2&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+        
+        <span class="n">v</span><span class="p">[</span><span class="s">&#39;fold_change&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">mean1</span><span class="o">/</span><span class="n">mean2</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">mean2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s">&quot;inf&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Parse command line arguments.  If no arguments are supplied, some defaults
+are used just for demonstration. The <code>formatter_class</code> is just there so 
+that default values are printed in the usage statement.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s">&quot;Compute fold change&quot;</span><span class="p">,</span>
+                                     <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentDefaultsHelpFormatter</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--sourceId&#39;</span><span class="p">,</span><span class="s">&#39;-s&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULTS</span><span class="p">[</span><span class="s">&#39;sourceId&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;source data set id&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--targetId&#39;</span><span class="p">,</span><span class="s">&#39;-t&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULTS</span><span class="p">[</span><span class="s">&#39;targetId&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;target data set id&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--csv&#39;</span><span class="p">,</span><span class="s">&#39;-c&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULTS</span><span class="p">[</span><span class="s">&#39;csv&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;output CSV file name&#39;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>Download the ontology, grid files for the two expression volumes, and 
+the annotation volume.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">structures</span> <span class="o">=</span> <span class="n">DownloadOntology</span><span class="p">()</span>
+    
+    <span class="n">h1</span><span class="p">,</span> <span class="n">arr1</span> <span class="o">=</span> <span class="n">DownloadGridFile</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sourceId</span><span class="p">)</span>
+    <span class="n">h2</span><span class="p">,</span> <span class="n">arr2</span> <span class="o">=</span> <span class="n">DownloadGridFile</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targetId</span><span class="p">)</span>
+    
+    <span class="n">annot</span> <span class="o">=</span> <span class="n">DownloadAnnotationVolume</span><span class="p">()</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Unionize the structures based on the ontology and compute the fold change
+between voxels in the source volume and voxels in the target volume.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="n">UnionizeStructures</span><span class="p">(</span><span class="n">arr1</span><span class="p">,</span><span class="n">arr2</span><span class="p">,</span><span class="n">annot</span><span class="p">,</span><span class="n">structures</span><span class="p">)</span>
+    <span class="n">ComputeFoldChange</span><span class="p">(</span><span class="n">structures</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Write the fold changes out to the CSV file.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csv</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="s">&quot;name&quot;</span><span class="p">,</span><span class="s">&quot;mean_fold_change&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">structures</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">],</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">),</span><span class="n">v</span><span class="p">[</span><span class="s">&#39;fold_change&#39;</span><span class="p">]])</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

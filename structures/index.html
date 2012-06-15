@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Structure Similarity Network</title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="../d3/d3.js"></script>
+    <script type="text/javascript" src="../d3/d3.layout.js"></script>
+	<script type="text/javascript" src="../javascripts/modernizr.svg.js"></script>
+	<script type="text/javascript" src="../javascripts/jquery.ie.cors.js"></script>
+  </head>
+  <body>
+	<h1> Structure Similarity Network </h1>
+	<div id="content">
+	  <div id="chart"></div>
+	  <div id="description">
+		  <p>This chart shows links between structures in the adult mouse 
+			brain atlas that have a high degree of gene expression correlation.
+			Correlations were computed for all coronally imaged probes over
+			all structures in the adult mouse brain structure graph. Expression 
+			data and structure information were downloaded using the API and 
+			processing was performed by the python numpy numerics library. </p>
+
+		  <p>The outer rings are a visualization of the mouse brain ontology with 
+			high level structures are on the outside and detailed structures on 
+			the inside. This is done using a D3 radial partition layout. The lines 
+			are a hierarchical bundling of the estimated links, which is to say
+			that lines with the same parent structures are bundled together.</p>
+
+		  <p> Hover over structure arcs to highlight connections attached to that 
+			structure. Hover over a connection to identify its endpoints. Try 
+			different structure scaling options by clicking the buttons below. 
+			Structures can be scaled uniformly or by volume. </p>
+
+		<table id="visProperties">
+		  <tr>
+			<td colspan=2><strong>Structure</strong></td>
+		  </tr>
+		  <tr>
+			<td class="label">name:</td>
+			<td><div id="structureLabel"></div></td>
+		  </tr>
+		  <tr>
+			<td class="label">volume:</td>
+			<td><div id="volumeLabel"></div></td>
+		  </tr>
+
+		  <tr><td class="hrule" colspan=2></td></tr>
+
+		  <tr>
+			<td colspan=2><strong>Connection</strong></td>
+		  </tr>
+		  <tr>
+			<td class="label">from:</td>
+			<td><div id="connectionFromLabel"></div></td>
+		  </tr>
+		  <tr>
+			<td class="label">to:</td>
+			<td><div id="connectionToLabel"></div></td>
+		  </tr>
+		  <tr>
+			<td class="label">correlation:</td> 
+			<td><div id="corrLabel"></div></td>
+		  </tr>
+
+		  <tr><td class="hrule" colspan=2></td></tr>
+
+		  <tr>
+			<td class="label">Structure Size:</td>
+			<td colspan=2>
+			  <div id="scaleButtons"></div>
+			</td>
+		  </tr>		
+		</table>
+	  </div>
+
+	  <div id="documentation">
+		<h4> Documentation and Resources</h4>
+
+		<table>
+		  <tr>
+			<td><a href="../doc/structures/download_data.py.html">download_data.py</a></td>
+			<td>Python/numpy connection correlation computation script.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/structures/structures.js.html">structures.js</a></td>
+			<td>Script for importing correlation results and visualization.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/structures/javascripts/jquery.ie.cors.js.html">jquery.ie.cors.js</a></td>
+			<td>Script enabling cross-origin AJAX requests in IE8 and IE9.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/structures/javascripts/modernizr.svg.js.html">modernizr.svg.js</a></td>
+			<td>Script detects if the browser supports SVG.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../structures/structures.tar.gz">structures.tar.gz</a></td>
+			<td>Archived source code.</td>
+		  </tr>
+		</table>
+
+		<p> <a href="../" id="homeButton">back to examples list</a> </p>
+
+		<script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+
+	  </div>
+	</div>
+  </body>
+
+  <script type="text/javascript" src="../structures/structures.js"></script>
+</html>

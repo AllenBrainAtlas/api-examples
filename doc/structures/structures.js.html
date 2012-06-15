@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>structures.js</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>structures.js</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>A an example visualization of connectivity data using the d3 partition and bundle layouts.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Hard-coded links to the data files to be used in this visualization</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">structuresFile</span> <span class="o">=</span> <span class="s2">&quot;all.structures.json&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">connFile</span> <span class="o">=</span> <span class="s2">&quot;all.connections.json&quot;</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">Modernizr</span><span class="p">.</span><span class="nx">svg</span><span class="p">){</span>
+  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#chart&#39;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;svgError&#39;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;This demo requires SVG support. &quot;</span> <span class="o">+</span>
+          <span class="s2">&quot;Click &lt;a href=&#39;http://caniuse.com/#cats=SVG&#39;&gt;here&lt;/a&gt; &quot;</span> <span class="o">+</span> 
+          <span class="s2">&quot;to see which browsers support SVG.&quot;</span><span class="p">));</span>
+  <span class="k">throw</span> <span class="s1">&#39;SVG not supported&#39;</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Constants that control properties of the visualization:</p>
+
+<ul>
+<li><code>w,h</code>: width/height of the visualization in pixels<br></li>
+<li><code>outerPct</code>: percent of radial pixel width for the ontology visualization</li>
+<li><code>colorRange</code>: color range corresponding to <code>corrDomain</code></li>
+<li><code>opacityRange</code>: opacity range corresponding to <code>corrDomain</code></li>
+<li><code>fadedOpacityRange</code>: opacity range for non-highlighted lines</li>
+<li><code>highlightOpacityRange</code>: opacity range for highlighted lines</li>
+<li><code>tensionRange</code>: line tension range corresponding to the angular
+              distance between structures in the ontology visualization.
+              Nearby structures are less tense, so they don&rsquo;t project as far
+              into the visualization.</li>
+<li><code>transitionTime</code>: transition duration in milliseconds.</li>
+<li><code>fastTransitionTime</code>: transition duration for faster transitions.</li>
+<li><code>rootStructureId</code>: the database ID of the root of the mouse ontology.</li>
+</ul>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">width</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">h</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">height</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">outerPct</span> <span class="o">=</span> <span class="p">.</span><span class="mi">30</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">colorRange</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;green&quot;</span><span class="p">,</span><span class="s2">&quot;blue&quot;</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">opacityRange</span> <span class="o">=</span> <span class="p">[.</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">fadedOpacityRange</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">.</span><span class="mi">05</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">highlightOpacityRange</span> <span class="o">=</span> <span class="p">[.</span><span class="mi">4</span><span class="p">,</span><span class="mf">0.7</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">tensionRange</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,.</span><span class="mi">99</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">transitionTime</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">fastTransitionTime</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">rootStructureId</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Scales for interpolating a range of colors/angles/values/etc</p>
+
+<ul>
+<li><code>x</code>: interpolates unitless [0,1] to radians [0,2pi].</li>
+<li><code>y</code>: interpolate [0,1] to outside-in in the outer ring (ontology vis.).</li>
+<li><code>iy</code>: interpolate [0,1] to inside-out in the inner circle (link vis.).</li>
+<li><code>distScale</code>: convert [-1,1] <code>x</code> distances into non-negative distances.</li>
+<li><code>connColorScale</code>: correlation colors.</li>
+<li><code>connOpacityScale</code>: correlation opacities.</li>
+<li><code>connFadedOpacityScale</code>: correlation opacities, not highlighted.</li>
+<li><code>connHighlightOpacityScale</code>: correlation opacities, highlighted.</li>
+<li><code>connTensionScale</code>: node separation mapped to line tension.</li>
+</ul>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">range</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">y</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">range</span><span class="p">([</span><span class="nx">r</span><span class="p">,</span> <span class="nx">r</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">outerPct</span><span class="p">)]);</span>
+<span class="kd">var</span> <span class="nx">iy</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">range</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nx">r</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">outerPct</span><span class="p">)]);</span>
+<span class="kd">var</span> <span class="nx">distScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="p">.</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">,.</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">]).</span><span class="nx">range</span><span class="p">([</span><span class="mi">0</span><span class="p">,.</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">,.</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="kd">var</span> <span class="nx">connColorScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">range</span><span class="p">(</span><span class="nx">colorRange</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connOpacityScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">range</span><span class="p">(</span><span class="nx">opacityRange</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connFadedOpacityScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">range</span><span class="p">(</span><span class="nx">fadedOpacityRange</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connHighlightOpacityScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">range</span><span class="p">(</span><span class="nx">highlightOpacityRange</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connTensionScale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">().</span><span class="nx">clamp</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">domain</span><span class="p">([</span><span class="mi">0</span><span class="p">,.</span><span class="mi">5</span><span class="p">]).</span><span class="nx">range</span><span class="p">(</span><span class="nx">tensionRange</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>jQuery&rsquo;d variables representing html buttons and labels.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">structureLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#structureLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">volumeLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#volumeLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">corrLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#corrLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connectionFromLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#connectionFromLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">connectionToLabel</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#connectionToLabel&quot;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">scaleButtonContainer</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#scaleButtons&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Fill the <code>scaleButtonContainer</code> with a set of radio buttons that control the
+size distribution of leaves in the ontology.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">scaleOptions</span> <span class="o">=</span> <span class="p">[{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;volume&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;#volumeButton&quot;</span><span class="p">,</span> <span class="nx">fn</span><span class="o">:</span> <span class="nx">volumeValue</span> <span class="p">},</span>
+          <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;#uniformButton&quot;</span><span class="p">,</span> <span class="nx">fn</span><span class="o">:</span> <span class="nx">uniformValue</span> <span class="p">}];</span>
+
+<span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">scaleOptions</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">button</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">name</span> <span class="o">=</span> <span class="nx">button</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+  <span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">))</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span><span class="s1">&#39;radio&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="nx">name</span><span class="o">+</span><span class="s1">&#39;Button&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span><span class="s1">&#39;scaleRadio&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span><span class="nx">name</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;checked&#39;</span><span class="p">,</span><span class="nx">name</span><span class="o">==</span><span class="s1">&#39;uniform&#39;</span><span class="p">));</span>
+
+  <span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">))</span>
+                <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;for&#39;</span><span class="p">,</span><span class="nx">name</span><span class="o">+</span><span class="s1">&#39;Button&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">name</span><span class="p">));</span>
+<span class="p">});</span>
+
+<span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">buttonset</span><span class="p">();</span>
+<span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s2">&quot;font-size&quot;</span><span class="p">,</span><span class="mi">8</span><span class="p">);</span>
+
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#homeButton&quot;</span><span class="p">).</span><span class="nx">button</span><span class="p">({</span> <span class="nx">icons</span><span class="o">:</span> <span class="p">{</span> <span class="nx">primary</span><span class="o">:</span> <span class="s2">&quot;ui-icon-home&quot;</span> <span class="p">}});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>These are the functions used to scale the structure arcs.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">volumeValue</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">volume</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">uniformValue</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>Construct the basic chart element, append an svg element and transform it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">vis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:svg&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="nx">w</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:g&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">w</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">h</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Construct the d3 visualization algorithm objections. <code>partition</code> handles
+the ontology layout, <code>bundle</code> the hierarchical edge bundling line layout.</p>
+
+<p>The <code>partition</code> layout builds a JS ontology representation, each element
+having <code>x</code> and <code>dx</code> properties in [0,1] that define the space the structure
+consumes in the layout.  Each element also has <code>y</code> and <code>dy</code> properties in
+[0,1] that describe how high up the hierarchy they are.  The <code>arc</code> method
+maps the &ldquo;horizontal&rdquo; properties to radians and the &ldquo;vertical&rdquo; properties
+to radial pixel length for the circular layout.</p>
+
+<p>The <code>bundle</code> layout takes an array of structure-structure connections and 
+interjects nodes corresponding to the nodes on the shortest path between 
+the leaves in the hierarchy. <code>connectionLine</code> looks at given node and
+determines if the line should touch the ontology visualization 
+(e.g. leaves) or be routed through virtual control points in the middle
+of the circle (e.g. parents). </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">partition</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">layout</span><span class="p">.</span><span class="nx">partition</span><span class="p">()</span>
+    <span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nx">graph_order</span> <span class="o">-</span> <span class="nx">a</span><span class="p">.</span><span class="nx">graph_order</span><span class="p">;</span> <span class="p">})</span>
+    <span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">uniformValue</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">bundle</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">layout</span><span class="p">.</span><span class="nx">bundle</span><span class="p">();</span>
+
+<span class="kd">var</span> <span class="nx">arc</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">svg</span><span class="p">.</span><span class="nx">arc</span><span class="p">()</span>
+    <span class="p">.</span><span class="nx">startAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">)));</span> <span class="p">})</span>
+    <span class="p">.</span><span class="nx">endAngle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">)));</span> <span class="p">})</span>
+    <span class="p">.</span><span class="nx">innerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span><span class="p">));</span> <span class="p">})</span>
+    <span class="p">.</span><span class="nx">outerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dy</span><span class="p">));</span> <span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">connectionLine</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">svg</span><span class="p">.</span><span class="nx">line</span><span class="p">.</span><span class="nx">radial</span><span class="p">()</span>
+  <span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="s2">&quot;bundle&quot;</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">radius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">terminal</span> <span class="o">?</span> 
+              <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">dy</span><span class="p">))</span> <span class="o">:</span>
+              <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">iy</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">dy</span><span class="p">));</span> <span class="p">})</span>
+
+  <span class="p">.</span><span class="nx">angle</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">,</span> <span class="nx">x</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="p">.</span><span class="mi">5</span><span class="o">*</span><span class="nx">d</span><span class="p">.</span><span class="nx">node</span><span class="p">.</span><span class="nx">dx</span><span class="p">)));</span> <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>initialize some globals that will be defined once the data is loaded.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">nodes</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">links</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">bundledLinks</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">connections</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">arcs</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">lines</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Load_the_data_and_lay_out_the_SVG_elements.'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Load_the_data_and_lay_out_the_SVG_elements.">&#182;</a>
+        </div>
+        <h4>Load the data and lay out the SVG elements.</h4>
+
+<p>This is asynchronous, so the second argument to each <code>d3.json</code> call is a 
+function that will be called once the data is loaded.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">d3</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">structuresFile</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">structures</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Build a hash from structure id to structure.  Make parent-child 
+relationships explicit.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">structureHash</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">&lt;</span><span class="nx">structures</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">structures</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+    <span class="nx">s</span><span class="p">.</span><span class="nx">children</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="nx">structureHash</span><span class="p">[</span><span class="nx">s</span><span class="p">.</span><span class="nx">id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">s</span><span class="p">;</span>
+  <span class="p">}</span>
+
+
+
+  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">structures</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="nx">structures</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">numParents</span> <span class="o">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">structure_id_path</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">numParents</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">parentId</span> <span class="o">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">structure_id_path</span><span class="p">[</span><span class="nx">numParents</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+      <span class="nx">structureHash</span><span class="p">[</span><span class="nx">parentId</span><span class="p">].</span><span class="nx">children</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>This is the root node of the ontology.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kd">var</span> <span class="nx">structureTree</span> <span class="o">=</span> <span class="nx">structureHash</span><span class="p">[</span><span class="nx">rootStructureId</span><span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Read in the connection file.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">d3</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">connFile</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">connData</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Transform the connections so that source and target actually point 
+to structures rather than structure IDs.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">connections</span> <span class="o">=</span> <span class="nx">connData</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">{</span>
+        <span class="nx">source</span><span class="o">:</span> <span class="nx">structureHash</span><span class="p">[</span><span class="nx">c</span><span class="p">.</span><span class="nx">source</span><span class="p">],</span>
+        <span class="nx">target</span><span class="o">:</span> <span class="nx">structureHash</span><span class="p">[</span><span class="nx">c</span><span class="p">.</span><span class="nx">target</span><span class="p">],</span>
+        <span class="nx">corr</span><span class="o">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">corr</span>
+      <span class="p">};</span>
+    <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>Compute the minimum and maximum correlation values and update the 
+scales accordingly.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">updateCorrelationDomain</span><span class="p">(</span>
+      <span class="nx">connections</span><span class="p">.</span><span class="nx">reduce</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">r</span><span class="p">,</span><span class="nx">c</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="k">return</span> <span class="p">[</span><span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">corr</span><span class="p">,</span><span class="nx">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">corr</span><span class="p">,</span><span class="nx">r</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> 
+      <span class="p">},</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="o">-</span><span class="mi">10</span><span class="p">]));</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Filter out connections from child to parent or vice-versa.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">connections</span> <span class="o">=</span> <span class="nx">connections</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="o">!</span><span class="nx">childOf</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">source</span><span class="p">,</span><span class="nx">c</span><span class="p">.</span><span class="nx">target</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">childOf</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">target</span><span class="p">,</span><span class="nx">c</span><span class="p">.</span><span class="nx">source</span><span class="p">)</span>
+    <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Supply the partition algorithm with the ontology, add
+an svg group to the chart to hold the structure arcs,
+and draw them.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">nodes</span> <span class="o">=</span> <span class="nx">partition</span><span class="p">.</span><span class="nx">nodes</span><span class="p">(</span><span class="nx">structureTree</span><span class="p">);</span>
+    <span class="nx">vis</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:g&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span><span class="s2">&quot;arc&quot;</span><span class="p">);</span>
+    <span class="nx">redrawArcs</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Add a property to the connections &mdash; angular distance on the plot.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">&lt;</span><span class="nx">connections</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+      <span class="kd">var</span> <span class="nx">src</span> <span class="o">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">source</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">trg</span> <span class="o">=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">target</span><span class="p">;</span>
+
+      <span class="nx">c</span><span class="p">.</span><span class="nx">dist</span> <span class="o">=</span> <span class="nx">distScale</span><span class="p">((</span><span class="nx">src</span><span class="p">.</span><span class="nx">x</span><span class="o">+</span><span class="p">.</span><span class="mi">5</span><span class="o">*</span><span class="nx">src</span><span class="p">.</span><span class="nx">dx</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="nx">trg</span><span class="p">.</span><span class="nx">x</span><span class="o">+</span><span class="p">.</span><span class="mi">5</span><span class="o">*</span><span class="nx">trg</span><span class="p">.</span><span class="nx">dx</span><span class="p">));</span>
+    <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>Flatten the ontology into arrays separated by ontology depth, then<br>
+use this to pool connnections up the ontology. Finally layout the
+connections.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">vis</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:g&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span><span class="s2">&quot;line&quot;</span><span class="p">);</span>
+
+    <span class="nx">redrawLines</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>Register Click event handlers for buttons that determine if 
+structure arcs are scaled uniformly or by their volume.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">scaleOptions</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">button</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">$</span><span class="p">(</span><span class="nx">button</span><span class="p">.</span><span class="nx">id</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">arcs</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">partition</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">button</span><span class="p">.</span><span class="nx">fn</span><span class="p">).</span><span class="nx">nodes</span><span class="p">(</span><span class="nx">structureTree</span><span class="p">))</span>
+          <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="nx">arcColor</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">arcStroke</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="nx">arcStrokeWidth</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+          <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="nx">transitionTime</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attrTween</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span><span class="nx">dataTween</span><span class="p">);</span>
+        
+        <span class="nx">redrawLines</span><span class="p">();</span>
+      <span class="p">});</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>A function handler for interpolating between the scales.  Currently not used.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcTween</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">xd</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">(</span><span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(),</span> <span class="p">[</span><span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">]);</span>
+  
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">i</span> <span class="o">?</span>
+      <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">d</span><span class="p">);</span> <span class="p">}</span> <span class="o">:</span>
+        <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span> <span class="nx">x</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">xd</span><span class="p">(</span><span class="nx">t</span><span class="p">));</span> <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">d</span><span class="p">);</span> <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>Add properties to an element that cache their current position and width.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">stash</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span> <span class="o">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x</span><span class="p">;</span>
+  <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span> <span class="o">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>Interpolate the arcs in data space.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">dataTween</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">({</span><span class="nx">x</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span><span class="p">,</span> <span class="nx">dx</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span><span class="p">},</span> <span class="nx">d</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nx">i</span><span class="p">(</span><span class="nx">t</span><span class="p">);</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">x</span><span class="p">;</span>
+    <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">dx</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">arc</span><span class="p">(</span><span class="nx">b</span><span class="p">);</span>
+  <span class="p">};</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Methods_for_drawing_lines'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Methods_for_drawing_lines">&#182;</a>
+        </div>
+        <h3>Methods for drawing lines</h3>
+
+<p>Draw the connection curves.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">redrawLines</span><span class="p">()</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-27'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-27">&#182;</a>
+        </div>
+        <p>If there are no bundled links yet, they need to be built.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">bundledLinks</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">bundledLinks</span> <span class="o">=</span> <span class="nx">bundle</span><span class="p">(</span><span class="nx">connections</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-28'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-28">&#182;</a>
+        </div>
+        <p>This is called a &ldquo;data join.&rdquo; Within the group &lsquo;line&rsquo;, path elements
+are joined to data supplied in the <code>bundledLinks</code> array.  The data
+join returns all of the existing elements, for which update their
+layout.  The opacity transition makes sure that any existing elements
+fade in smoothly.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">lines</span> <span class="o">=</span> <span class="nx">vis</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;g.line&quot;</span><span class="p">).</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">bundledLinks</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">lineLayout</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+
+    <span class="nx">lines</span><span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+      <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="nx">lineOpacity</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-29'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-29">&#182;</a>
+        </div>
+        <p>The <code>enter</code> method is called when paths are first added, which
+is a good time to set their shape and color properties.  The
+transition at the end ensures that they fade in smoothly.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">lines</span><span class="p">.</span><span class="nx">enter</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:path&quot;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">lineLayout</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">lineColor</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseover&quot;</span><span class="p">,</span> <span class="nx">lineMouseOver</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseout&quot;</span><span class="p">,</span> <span class="nx">lineMouseOut</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+      <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="nx">lineOpacity</span><span class="p">);</span>			</pre></div>
+      </td>
+    </tr>
+    <tr id='section-30'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-30">&#182;</a>
+        </div>
+        <p>The &lsquo;exit&rsquo; method is called whenever data elements are removed (which
+happens when the number of nodes has changed).  The transition fades 
+them out before they actually get removed from the DOM.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">lines</span><span class="p">.</span><span class="nx">exit</span><span class="p">().</span><span class="nx">transition</span><span class="p">()</span>
+      <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">remove</span><span class="p">();</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-31'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-31">&#182;</a>
+        </div>
+        <p>this is a transition.  d3 makes this very easy, for CSS properties
+that are easy to interpolate, just supply the data, call for a 
+transition, and tell it what property is changing.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">vis</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;g.line&quot;</span><span class="p">).</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">bundledLinks</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+      <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="nx">transitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">lineLayout</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">lineColor</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="nx">lineOpacity</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-32'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-32">&#182;</a>
+        </div>
+        <p>This function takes a connection (<code>d</code>), which is an array of structure 
+elements, and returns an svg path.  The tension of that path is lower
+if the two structures are radially close to each other.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineLayout</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">c</span> <span class="o">=</span> <span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">source</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">c</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+
+  <span class="kd">var</span> <span class="nx">tension</span> <span class="o">=</span> <span class="nx">connTensionScale</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">dist</span><span class="p">);</span>
+
+  <span class="nx">td</span> <span class="o">=</span> <span class="nx">d</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">di</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">{</span> <span class="nx">node</span><span class="o">:</span> <span class="nx">di</span><span class="p">,</span> <span class="nx">terminal</span><span class="o">:</span> <span class="nx">di</span> <span class="o">==</span> <span class="nx">c</span><span class="p">.</span><span class="nx">source</span> <span class="o">||</span> <span class="nx">di</span> <span class="o">==</span> <span class="nx">c</span><span class="p">.</span><span class="nx">target</span> <span class="p">};</span> <span class="p">});</span>
+
+  <span class="k">return</span> <span class="nx">connectionLine</span><span class="p">.</span><span class="nx">tension</span><span class="p">(</span><span class="nx">tension</span><span class="p">)(</span><span class="nx">td</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-33'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-33">&#182;</a>
+        </div>
+        <p>Map a connection to a color</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineColor</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">connColorScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-34'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-34">&#182;</a>
+        </div>
+        <p>Map a connection to an opacity</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineOpacity</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">connOpacityScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-35'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-35">&#182;</a>
+        </div>
+        <p>Map a connection to an opacity, fade out elements that are not children of
+the supplied parent.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineStructureHighlightOpacity</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">parent</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">childOf</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nx">parent</span><span class="p">)</span> <span class="o">||</span> <span class="nx">childOf</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="nx">d</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="nx">parent</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nx">connHighlightOpacityScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+  <span class="k">else</span>
+    <span class="k">return</span> <span class="nx">connFadedOpacityScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-36'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-36">&#182;</a>
+        </div>
+        <p>Determine if a function is a child of another node by moving up the ontology.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">childOf</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span><span class="nx">parent</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">parent</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span>
+      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="nx">node</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">parent</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-37'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-37">&#182;</a>
+        </div>
+        <p>Map a connection to an opacity, fade out lines that don&rsquo;t start and end
+at the same location as the supplied line.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineHighlightOpacity</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">line</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">line</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span> <span class="o">&amp;&amp;</span>
+    <span class="nx">d</span><span class="p">[</span><span class="nx">d</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">line</span><span class="p">[</span><span class="nx">line</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">id</span><span class="p">)</span> 
+    <span class="k">return</span> <span class="nx">connHighlightOpacityScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+  <span class="k">else</span>
+    <span class="k">return</span> <span class="nx">connFadedOpacityScale</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-38'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-38">&#182;</a>
+        </div>
+        <p>Highlight a line as the user mouses over it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineMouseOver</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">connectionFromLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">name</span><span class="p">);</span>
+  <span class="nx">connectionToLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="nx">d</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">name</span><span class="p">);</span>
+  <span class="nx">corrLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">connections</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">corr</span><span class="p">);</span>
+
+  <span class="nx">lines</span><span class="p">.</span><span class="nx">transition</span><span class="p">().</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">datum</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">lineHighlightOpacity</span><span class="p">(</span><span class="nx">datum</span><span class="p">,</span> <span class="nx">d</span><span class="p">,</span> <span class="nx">i</span><span class="p">);</span> <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-39'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-39">&#182;</a>
+        </div>
+        <p>Go back to regular opacity when not mousing over a line.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">lineMouseOut</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">connectionFromLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+  <span class="nx">connectionToLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+  <span class="nx">corrLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+
+  <span class="nx">lines</span><span class="p">.</span><span class="nx">transition</span><span class="p">().</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="nx">lineOpacity</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-Methods_for_drawing_arcs'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-Methods_for_drawing_arcs">&#182;</a>
+        </div>
+        <h3>Methods for drawing arcs</h3>
+
+<p>Remove all existing structure arcs and draw thm again.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">redrawArcs</span><span class="p">()</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-41'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-41">&#182;</a>
+        </div>
+        <p>lay out the structure arcs</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">vis</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;g.arc&quot;</span><span class="p">).</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">).</span><span class="nx">remove</span><span class="p">();</span>
+
+  <span class="nx">arcs</span> <span class="o">=</span> <span class="nx">vis</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;g.arc&quot;</span><span class="p">).</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">nodes</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">enter</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg:path&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">arc</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="nx">arcColor</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="nx">arcStroke</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="nx">arcStrokeWidth</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseover&quot;</span><span class="p">,</span> <span class="nx">arcMouseOver</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;mouseout&quot;</span><span class="p">,</span> <span class="nx">arcMouseOut</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">stash</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-42'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-42">&#182;</a>
+        </div>
+        <p>Clear all highlight information when the mouse leaves an arc.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcMouseOut</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">structureLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+  <span class="nx">volumeLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="nx">lines</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">lines</span><span class="p">.</span><span class="nx">transition</span><span class="p">().</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="nx">lineOpacity</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-43'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-43">&#182;</a>
+        </div>
+        <p>When the mouse is over an arc, describe its corresponding structure and
+highlight all of the lines entering or leaving it and its children.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcMouseOver</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="nx">structureLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+  <span class="nx">volumeLabel</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">volume</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="nx">lines</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">lines</span><span class="p">.</span><span class="nx">transition</span><span class="p">().</span><span class="nx">duration</span><span class="p">(</span><span class="nx">fastTransitionTime</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span><span class="kd">function</span><span class="p">(</span><span class="nx">datum</span><span class="p">,</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">lineStructureHighlightOpacity</span><span class="p">(</span><span class="nx">datum</span><span class="p">,</span> <span class="nx">d</span><span class="p">,</span><span class="nx">i</span><span class="p">);</span> <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-44'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-44">&#182;</a>
+        </div>
+        <p>Map a structure to a color.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcColor</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;#&quot;</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">color_hex_triplet</span><span class="p">;</span>
+  <span class="k">else</span>
+    <span class="k">return</span> <span class="s2">&quot;#fff&quot;</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-45'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-45">&#182;</a>
+        </div>
+        <p>Map a sturcture to an opacity.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcOpacity</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-46'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-46">&#182;</a>
+        </div>
+        <p>White outlines for the structure arcs.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcStroke</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s2">&quot;#fff&quot;</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-47'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-47">&#182;</a>
+        </div>
+        <p>How wide of an outline to draw for each arc.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">arcStrokeWidth</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s2">&quot;1px&quot;</span><span class="p">;</span>
+<span class="p">}</span>					   </pre></div>
+      </td>
+    </tr>
+    <tr id='section-48'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-48">&#182;</a>
+        </div>
+        <p>Update the domain of all of the interpolation scales.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">updateCorrelationDomain</span><span class="p">(</span><span class="nx">corrDomain</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">connColorScale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">corrDomain</span><span class="p">);</span>
+  <span class="nx">connOpacityScale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">corrDomain</span><span class="p">);</span>
+  <span class="nx">connFadedOpacityScale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">corrDomain</span><span class="p">);</span>
+  <span class="nx">connHighlightOpacityScale</span><span class="p">.</span><span class="nx">domain</span><span class="p">(</span><span class="nx">corrDomain</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

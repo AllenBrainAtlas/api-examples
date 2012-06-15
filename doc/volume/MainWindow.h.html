@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>MainWindow.h</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="MainWindow.cxx.html">MainWindow.cxx</a>
+          <a class="source" href="MainWindow.h.html">MainWindow.h</a>
+          <a class="source" href="main.cxx.html">main.cxx</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>MainWindow.h</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="cp">#ifndef __MainWindow_h</span>
+<span class="cp">#define __MainWindow_h</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre> 
+<span class="cp">#include &quot;vtkSmartPointer.h&quot;</span>
+<span class="cp">#include &lt;QMainWindow&gt;</span>
+<span class="cp">#include &lt;QNetworkAccessManager&gt;</span>
+<span class="cp">#include &lt;QSlider&gt;</span>
+<span class="cp">#include &lt;vector&gt;</span>
+ </pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Forward Qt and VTK class declarations</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">class</span> <span class="n">Ui_MainWindow</span><span class="p">;</span>
+
+<span class="n">class</span> <span class="n">QVTKWidget</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkActor</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkColorTransferFunction</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkMetaImageReader</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkContourFilter</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkDataSetMapper</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkImageData</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkImageViewer2</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkPiecewiseFunction</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkRenderer</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkSmartVolumeMapper</span><span class="p">;</span>
+<span class="n">class</span> <span class="n">vtkVolume</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>A simple struct for grouping objects related to a slice view.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">struct</span> <span class="n">SliceView</span>
+<span class="p">{</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkImageViewer2</span><span class="o">&gt;</span> <span class="n">viewer</span><span class="p">;</span>
+  <span class="n">QVTKWidget</span><span class="o">*</span> <span class="n">widget</span><span class="p">;</span>
+  <span class="n">QSlider</span><span class="o">*</span> <span class="n">slider</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SliceView</span><span class="o">&gt;</span> <span class="n">SliceViewList</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>This is the class that the Qt GUI interacts with.  For those unfamiliar 
+with Qt, this header is not proper C++.  Qt adds a few keywords that help
+manage GUI events.  All Qt classes can declare &lsquo;slots&rsquo;, which can be called
+via &lsquo;signals&rsquo; in the GUI (e.g. button presses).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">class</span> <span class="n">MainWindow</span> <span class="o">:</span> <span class="n">public</span> <span class="n">QMainWindow</span>
+<span class="p">{</span>
+  <span class="n">Q_OBJECT</span>
+
+<span class="nl">public:</span>
+
+  <span class="n">MainWindow</span><span class="p">();</span> 
+  <span class="o">~</span><span class="n">MainWindow</span><span class="p">();</span>
+ </pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Qt slots can be named however you want, but if you follow Qt&rsquo;s naming
+convention, they will be automatically connected to the signals specified.
+The format is <code>on_&lt;object&gt;_&lt;signal&gt;(args)</code>.  Note that if you follow
+the standard syntax but <code>&lt;object&gt;</code> or <code>&lt;signal&gt;</code> does not exist, a soft
+error will be thrown at runtime.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">public</span> <span class="n">slots</span><span class="o">:</span>
+ 
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_actionQuit_triggered</span><span class="p">();</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_actionLoadEnergy_triggered</span><span class="p">();</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_actionLoadReference_triggered</span><span class="p">();</span>
+  
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_xySlider_valueChanged</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_xzSlider_valueChanged</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_yzSlider_valueChanged</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_energySpinBox_valueChanged</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">on_referenceSpinBox_valueChanged</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+ 
+<span class="nl">protected:</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>VTK has a smart pointer that will take care of object deletion when this 
+class instance falls out of scope.  These classes connect to form a VTK 3D 
+isocontour visualization pipeline.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkMetaImageReader</span><span class="o">&gt;</span> <span class="n">EnergyReader</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolume</span><span class="o">&gt;</span> <span class="n">EnergyVolume</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkSmartVolumeMapper</span><span class="o">&gt;</span> <span class="n">EnergyMapper</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkPiecewiseFunction</span><span class="o">&gt;</span> <span class="n">EnergyOpacity</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkColorTransferFunction</span><span class="o">&gt;</span> <span class="n">EnergyColor</span><span class="p">;</span>
+
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkMetaImageReader</span><span class="o">&gt;</span> <span class="n">ReferenceReader</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkVolume</span><span class="o">&gt;</span> <span class="n">ReferenceVolume</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkSmartVolumeMapper</span><span class="o">&gt;</span> <span class="n">ReferenceMapper</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkPiecewiseFunction</span><span class="o">&gt;</span> <span class="n">ReferenceOpacity</span><span class="p">;</span>
+  <span class="n">vtkSmartPointer</span><span class="o">&lt;</span><span class="n">vtkColorTransferFunction</span><span class="o">&gt;</span> <span class="n">ReferenceColor</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>A vector of objects related to 2D slice plane visualizations.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">SliceViewList</span> <span class="n">SliceViews</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>The class responsible for making networked download requests.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">QNetworkAccessManager</span><span class="o">*</span> <span class="n">NetworkManager</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Update all visualization pipelines.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">void</span> <span class="n">InitializeEnergy</span><span class="p">();</span>
+  </pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>Update all 2D slice visualization pipelines.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">void</span> <span class="n">InitializeSliceViews</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Update a particular slice visualization pipeline.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">void</span> <span class="n">UpdateSliceView</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Update the 3D isocontour visualization pipeline.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">void</span> <span class="n">Initialize3dView</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>Update all visualization pipelines.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kt">void</span> <span class="n">InitializeReference</span><span class="p">();</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>A helpful method for getting the primary renderer out of a QVTKWidget.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">static</span> <span class="n">vtkRenderer</span><span class="o">*</span> <span class="n">GetRenderer</span><span class="p">(</span><span class="n">QVTKWidget</span><span class="o">*</span><span class="p">);</span>
+
+<span class="nl">private:</span>
+ </pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Designer form</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="n">Ui_MainWindow</span> <span class="o">*</span><span class="n">ui</span><span class="p">;</span>
+
+<span class="p">};</span>
+ 
+<span class="cp">#endif </span><span class="c1">// MainWindow_H</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

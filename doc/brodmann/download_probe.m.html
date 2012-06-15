@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>download_probe.m</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="download_expression.m.html">download_expression.m</a>
+          <a class="source" href="download_probe.m.html">download_probe.m</a>
+          <a class="source" href="download_specimen.m.html">download_specimen.m</a>
+          <a class="source" href="get_api_path.m.html">get_api_path.m</a>
+          <a class="source" href="parse_json.m.html">parse_json.m</a>
+          <a class="source" href="sample_anatomy_toolbox_demo.m.html">sample_anatomy_toolbox_demo.m</a>
+          <a class="source" href="transform_samples.m.html">transform_samples.m</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>download_probe.m</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>download the meta information for a probe, given a probe name</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">function</span><span class="w"> </span>probe <span class="p">=</span><span class="w"> </span><span class="nf">download_probe</span><span class="p">(</span>probe_name<span class="p">)</span><span class="w"></span>
+
+<span class="n">requestFmt</span> <span class="p">=</span> <span class="s">&#39;%s/Probe/query.json?criteria=[name$eq&#39;&#39;%s&#39;&#39;]&amp;include=gene&#39;</span><span class="p">;</span>
+<span class="n">url</span> <span class="p">=</span> <span class="n">sprintf</span><span class="p">(</span><span class="n">requestFmt</span><span class="p">,</span> <span class="n">get_api_path</span><span class="p">(),</span> <span class="n">probe_name</span><span class="p">);</span>
+<span class="nb">disp</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+
+<span class="n">str</span> <span class="p">=</span> <span class="n">urlread</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="n">json</span> <span class="p">=</span> <span class="n">parse_json</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="n">probe</span> <span class="p">=</span> <span class="n">json</span><span class="p">.</span><span class="n">msg</span><span class="p">{</span>1<span class="p">};</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Image Synchronization</title>
+	<link rel="stylesheet" href="../jquery-ui-1.8.18/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+	<link rel="stylesheet" href="../stylesheets/examples.css">
+	<link href="http://www.brain-map.org/external_assets/stylesheets/portal.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://www.brain-map.org/external_assets/javascripts/portal.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../jquery-ui-1.8.18/js/jquery-ui-1.8.18.custom.min.js"></script>
+	<script type="text/javascript" src="../javascripts/modernizr.svg.js"></script>
+	<script type="text/javascript" src="../javascripts/jquery.ie.cors.js"></script>
+    <style type="text/css">
+	  #imageTable {
+	  text-align: center;
+	  }
+
+	  #imageTable td {
+	  padding: 2px 10px;
+	  }
+
+	  #imageTable div.image {
+	  border: 2px solid #ddd;
+	  }
+    </style>
+  </head>
+  <body>
+	<h1> Image Synchronization </h1>
+	<div id="errorDialog" title="API Query Error"></div>
+	<div id="content">
+	  <table id="imageTable">
+		<tr>
+		  <td> <a id="image1Anchor"></a> </td>
+		  <td> <a id="image2Anchor"></a> </td>
+		</tr>
+		<tr>
+		  <td> <div id="image1" class="image"></div> </td>
+		  <td> <div id="image2" class="image"></div> </td>
+		</tr>
+
+		<tr>
+		  <td> reference NISSL </td>
+		  <td> reference Annotation </td>
+		</tr>
+		<tr>
+		  <td> <div id="referenceNissl" class="image"></div> </td>
+		  <td> <div id="referenceAnnot" class="image"></div> </td>
+		</tr>
+	  </table>
+	  
+	  <div id="description">
+		<p> This page demonstrates how to use the API to retrieve an adult mouse
+		  image from one data set and find the nearest view of another 
+		  data set using the <tt>image_to_image</tt> method. It also shows how to retrieve
+		  the nearest view of a reference atlas, with and without annotations, 
+		  using the <tt>image_to_atlas</tt> method.</p>
+		<p> Documentation for the JavaScript code that demonstrates how to
+		  make the API and imageservice calls described above is 
+		  <a href="../doc/imagesync/imagesync.js.html">here</a>. </p>
+		<div id="reloadButton">randomize section</div>
+
+	  </div>
+
+	  <div id="documentation">
+		<h4> Documentation and Resources</h4>
+
+		<table>
+		  <tr>
+			<td><a href="../doc/imagesync/imagesync.js.html">imagesync.js</a></td>
+			<td>Script that handles API queries and page layout.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/imagesync/javascripts/jquery.ie.cors.js.html">jquery.ie.cors.js</a></td>
+			<td>Script enabling cross-origin AJAX requests in IE8 and IE9.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../doc/imagesync/javascripts/modernizr.svg.js.html">modernizr.svg.js</a></td>
+			<td>Script detects if the browser supports SVG.</td>
+		  </tr>
+		  <tr>
+			<td><a href="../imagesync/imagesync.tar.gz">imagesync.tar.gz</a></td>
+			<td>Archived source code.</td>
+		  </tr>
+		</table>
+
+		<p> <a href="../" id="homeButton">back to examples list</a> </p>
+
+		<script src="http://www.brain-map.org/external_assets/javascripts/portalFooter.js" type="text/javascript"></script>
+
+	  </div>
+	</div>
+  </body>
+
+  <script type="text/javascript" src="../imagesync/imagesync.js"></script>
+</html>

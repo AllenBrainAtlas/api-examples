@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>api.R</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="api.R.html">api.R</a>
+          <a class="source" href="human_ma_demo.R.html">human_ma_demo.R</a>
+          <a class="source" href="preprocessData.R.html">preprocessData.R</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>api.R</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>A function returning the path of the API.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>getApiPath <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">()</span> <span class="p">{</span>
+  return <span class="s">&quot;http://ibs-davidf-ux1:3000&quot;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Download all of the rows available from a supplied API query.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>apiQuery <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>query<span class="p">)</span> <span class="p">{</span>
+  totalRows <span class="o">&lt;-</span> <span class="m">-1</span>
+  rowsPerPage <span class="o">&lt;-</span> <span class="m">2000</span>
+  startRow <span class="o">&lt;-</span> <span class="m">0</span>
+  queryFormat <span class="o">&lt;-</span> <span class="s">&quot;%s/api/v2/data/%s&amp;startRow=%d&amp;numRows=%d&quot;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Download meta information about the human microarray samples one page at a time. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kr">while</span> <span class="p">(</span>totalRows <span class="o">&lt;</span> <span class="m">0</span> <span class="o">||</span> startRow <span class="o">&lt;</span> totalRows<span class="p">)</span> <span class="p">{</span>
+    queryString <span class="o">&lt;-</span> sprintf<span class="p">(</span>queryFormat<span class="p">,</span> getApiPath<span class="p">(),</span> query<span class="p">,</span> startRow<span class="p">,</span> rowsPerPage<span class="p">)</span>
+    print<span class="p">(</span>queryString<span class="p">)</span>
+    
+    resultString <span class="o">&lt;-</span> readLines<span class="p">(</span>queryString<span class="p">)</span>
+    resultJSON <span class="o">&lt;-</span> fromJSON<span class="p">(</span>resultString<span class="p">)</span>
+  
+    <span class="kr">if</span> <span class="p">(</span>totalRows <span class="o">&lt;</span> <span class="m">0</span><span class="p">)</span> <span class="p">{</span>
+      totalRows <span class="o">&lt;-</span> as.integer<span class="p">(</span>resultJSON<span class="p">$</span>total_rows<span class="p">)</span>
+      output <span class="o">&lt;-</span> resultJSON<span class="p">$</span>msg
+    <span class="p">}</span> <span class="kr">else</span> <span class="p">{</span>
+      output <span class="o">&lt;-</span> c<span class="p">(</span>output<span class="p">,</span>resultJSON<span class="p">$</span>msg<span class="p">)</span>
+    <span class="p">}</span>
+
+    startRow <span class="o">&lt;-</span> startRow <span class="o">+</span> rowsPerPage
+  <span class="p">}</span>
+
+  <span class="kr">return</span><span class="p">(</span>output<span class="p">)</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Download metadata about a specified structure.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>downloadStructure <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>structureID<span class="p">)</span> <span class="p">{</span>
+  queryString <span class="o">&lt;-</span> sprintf<span class="p">(</span><span class="s">&quot;%s/api/v2/data/Structure/%s.json&quot;</span><span class="p">,</span> getApiPath<span class="p">(),</span> structureID<span class="p">)</span>
+  print<span class="p">(</span>queryString<span class="p">)</span>
+  resultString <span class="o">&lt;-</span> readLines<span class="p">(</span>queryString<span class="p">)</span>
+  resultJSON <span class="o">&lt;-</span> fromJSON<span class="p">(</span>resultString<span class="p">)</span>
+  
+  <span class="kr">return</span><span class="p">(</span>resultJSON<span class="p">$</span>msg<span class="p">[[</span><span class="m">1</span><span class="p">]])</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Sort a data frame full of sample meta information.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>downloadSampleProperties <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>sampleInfo<span class="p">)</span> <span class="p">{</span>
+  structureIDs <span class="o">=</span> sampleInfo<span class="p">$</span>structure_id
+  numSamples <span class="o">&lt;-</span> length<span class="p">(</span>structureIDs<span class="p">)</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Fill the sample data frame with color and order information.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  structureColors <span class="o">&lt;-</span> array<span class="p">(</span><span class="s">&quot;#000000FF&quot;</span><span class="p">,</span>numSamples<span class="p">)</span>
+  structureOrders <span class="o">&lt;-</span> array<span class="p">(</span><span class="m">0</span><span class="p">,</span>numSamples<span class="p">)</span>
+
+  <span class="kr">for</span> <span class="p">(</span>i in <span class="m">1</span>:numSamples<span class="p">)</span> <span class="p">{</span>
+    s <span class="o">=</span> downloadStructure<span class="p">(</span>structureIDs<span class="p">[</span>i<span class="p">])</span>
+    structureOrders<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> s<span class="p">$</span>st_order
+    structureColors<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> rgb<span class="p">(</span>s<span class="p">$</span>red<span class="p">,</span>s<span class="p">$</span>green<span class="p">,</span>s<span class="p">$</span>blue<span class="p">,</span>maxColorValue<span class="o">=</span><span class="m">255</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  sampleInfo<span class="p">[,</span><span class="s">&quot;order&quot;</span><span class="p">]</span> <span class="o">&lt;-</span> structureOrders
+  sampleInfo<span class="p">[,</span><span class="s">&quot;color&quot;</span><span class="p">]</span> <span class="o">&lt;-</span> structureColors
+  <span class="kr">return</span><span class="p">(</span>sampleInfo<span class="p">)</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

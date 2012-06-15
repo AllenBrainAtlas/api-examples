@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>stagesync.js</title>
+  <link rel="stylesheet" href="../../stylesheets/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>stagesync.js</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>This script primarily builds URLs to imageservice images and demonstrates
+how to use the <code>image_to_image</code> and <code>image_to_atlas</code> methods for retrieving
+the nearest image in one image to another image or atlas.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>Contants that point to the imageservice and API, respectively. </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">svcPath</span> <span class="o">=</span> <span class="s2">&quot;http://api.brain-map.org/cgi-bin/imageservice&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">apiPath</span> <span class="o">=</span> <span class="s2">&quot;http://api.brain-map.org/api/v2/&quot;</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>Many scanned images have very large pixel resolutions.  WWe have resampled the 
+original images at multiple lower resolutions all the way down to a
+256x256 thumbnail.  The number of tiers in this image pyramid depends
+on the original dimensions of the image.  </p>
+
+<p>When making requests to the imageservice, the <code>downsample</code> parameter determines
+what tier/resolution will be returned.  <code>downsample=0</code> returns the highest
+pixel resolution.  Each level of downsampling is a factor of 2 reduction in 
+pixel resolution in both dimensions.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">downsample</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">w</span> <span class="o">=</span> <span class="mi">285</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">h</span> <span class="o">=</span> <span class="mi">285</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">ages</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&quot;E11.5&quot;</span><span class="p">,</span> <span class="s2">&quot;E13.5&quot;</span><span class="p">,</span> <span class="s2">&quot;E15.5&quot;</span><span class="p">,</span> <span class="s2">&quot;E18.5&quot;</span><span class="p">,</span> <span class="s2">&quot;P4&quot;</span><span class="p">,</span> <span class="s2">&quot;P14&quot;</span><span class="p">,</span> <span class="s2">&quot;P28&quot;</span><span class="p">,</span> <span class="s2">&quot;P56&quot;</span> <span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>Specify default image ids to show, and change them as requested in the 
+url parameter string.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">var</span> <span class="nx">section</span> <span class="o">=</span> <span class="mi">101121829</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">product</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">urlVars</span> <span class="o">=</span> <span class="nx">getUrlVars</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="s1">&#39;sectionImageId&#39;</span> <span class="k">in</span> <span class="nx">urlVars</span><span class="p">)</span>
+  <span class="nx">section</span> <span class="o">=</span> <span class="nx">urlVars</span><span class="p">.</span><span class="nx">sectionImageId</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>Build the jQuery reload button. When clicked, call <code>reloadImages</code>.  Also, 
+format the page a bit.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#reloadButton&#39;</span><span class="p">).</span><span class="nx">button</span><span class="p">().</span><span class="nx">click</span><span class="p">(</span><span class="nx">reloadImages</span><span class="p">);</span>
+<span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#homeButton&quot;</span><span class="p">).</span><span class="nx">button</span><span class="p">({</span> <span class="nx">icons</span><span class="o">:</span> <span class="p">{</span> <span class="nx">primary</span><span class="o">:</span> <span class="s2">&quot;ui-icon-home&quot;</span> <span class="p">}});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>Load the images first time the page is loaded.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nx">reloadImages</span><span class="p">();</span>
+
+<span class="kd">function</span> <span class="nx">reloadImages</span><span class="p">()</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Load the meta data for the section image in question.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="nx">loadSectionInfo</span><span class="p">(</span><span class="nx">section</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">sectionInfo</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>The results come back as an array, even if there&rsquo;s only one result.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">sectionInfo</span> <span class="o">=</span> <span class="nx">sectionInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    </pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>Get the central coordinate of the image.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="kd">var</span> <span class="nx">cx</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">(</span><span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">width</span><span class="o">*</span><span class="p">.</span><span class="mi">5</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">cy</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">(</span><span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">height</span><span class="o">*</span><span class="p">.</span><span class="mi">5</span><span class="p">);</span>
+    </pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>Figure out which gene (the first, if there are multiple) this section is displaying.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="kd">var</span> <span class="nx">geneId</span> <span class="o">=</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">data_set</span><span class="p">.</span><span class="nx">genes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">geneName</span> <span class="o">=</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">data_set</span><span class="p">.</span><span class="nx">genes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">acronym</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>Download meta data for section data sets displaying this same gene in the developing
+mouse product, from a given list of developing mouse reference spaces.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="nx">loadDataSets</span><span class="p">(</span><span class="nx">geneId</span><span class="p">,</span> <span class="nx">ages</span><span class="p">,</span> <span class="nx">product</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dataSets</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>Put the source data set at the front of the queue.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>      <span class="nx">dataSets</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="k">if</span> <span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">data_set_id</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">data_set_id</span><span class="p">)</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">});</span>
+
+      <span class="nx">loadAtlases</span><span class="p">(</span><span class="nx">ages</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">atlases</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="kd">var</span> <span class="nx">numRows</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">dataSets</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span> <span class="nx">atlases</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>Pre-populate the div table with elements to hold to-be-downloaded images.
+This prevents AJAX responses from populating the table in the wrong order.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="kd">var</span> <span class="nx">imageTable</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#imageTable&quot;</span><span class="p">);</span>
+
+        <span class="nx">imageTable</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;tr&gt;&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;th&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;imageTitle0&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s1">&#39;Source &#39;</span> <span class="o">+</span> <span class="nx">geneName</span> <span class="o">+</span> <span class="s1">&#39; Section&#39;</span><span class="p">))</span>
+                      <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;colspan&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)));</span>
+
+        <span class="nx">imageTable</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;tr&gt;&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;td&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;image0&#39;</span><span class="p">))</span>
+                      <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;colspan&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+                      <span class="p">.</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;sourceCell&#39;</span><span class="p">)));</span>
+                  
+        <span class="nx">imageTable</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;tr&gt;&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;th&gt;&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;Synchronized &quot;</span> <span class="o">+</span> <span class="nx">geneName</span> <span class="o">+</span> <span class="s2">&quot; ISH Sections&quot;</span><span class="p">))</span>
+                  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;th&gt;&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;Synchronized Atlases&quot;</span><span class="p">)));</span>
+
+
+        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">&lt;</span><span class="nx">numRows</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">imageTable</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;tr&gt;&quot;</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;td&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;imageTitle&#39;</span><span class="o">+</span><span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))))</span>
+                    <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;td&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;atlasTitle&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">))));</span>
+                      
+          <span class="nx">imageTable</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;tr&gt;&quot;</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;td&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;image&#39;</span><span class="o">+</span><span class="p">(</span><span class="nx">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))))</span>
+                    <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;&lt;td&gt;&quot;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;atlas&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">))));</span>
+
+          <span class="k">if</span> <span class="p">(</span><span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">dataSets</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#image&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;image loading&#39;</span><span class="p">);</span>
+
+          <span class="k">if</span> <span class="p">(</span><span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">atlases</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#atlas&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;image loading&#39;</span><span class="p">);</span>
+        <span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>Give the image divs a loading spinner.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#temporarySpacer&#39;</span><span class="p">).</span><span class="nx">remove</span><span class="p">();</span>
+        </pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>Pull out a list of dataSetIds from the response meta data.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="kd">var</span> <span class="nx">dataSetIds</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">dataSets</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span> <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>Use the <code>image_to_image</code> service to find the nearest coordinate in the nearest
+section in each the data sets we downloaded.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="nx">imageToImage</span><span class="p">(</span><span class="nx">cx</span><span class="p">,</span> <span class="nx">cy</span><span class="p">,</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">dataSetIds</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">coords</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-18'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-18">&#182;</a>
+        </div>
+        <p>Put failed synchronizations at the end of the list.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>          <span class="nx">coords</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="nx">b</span><span class="p">)</span> <span class="p">{</span> 
+            <span class="kd">var</span> <span class="nx">aId</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">image_sync</span><span class="p">.</span><span class="nx">section_image_id</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">bId</span> <span class="o">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">image_sync</span><span class="p">.</span><span class="nx">section_image_id</span><span class="p">;</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="nx">aId</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">bId</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">aId</span> <span class="o">&amp;&amp;</span> <span class="nx">bId</span><span class="p">)</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="k">else</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+          <span class="p">});</span>
+          
+          <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">coords</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">targetCoord</span><span class="p">)</span> <span class="p">{</span>
+            
+            <span class="nx">targetCoord</span> <span class="o">=</span> <span class="nx">targetCoord</span><span class="p">.</span><span class="nx">image_sync</span><span class="p">;</span>
+            </pre></div>
+      </td>
+    </tr>
+    <tr id='section-19'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-19">&#182;</a>
+        </div>
+        <p>Make sure that synchronization succeeded before moving on.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>            <span class="k">if</span> <span class="p">(</span><span class="nx">targetCoord</span><span class="p">.</span><span class="nx">section_image_id</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-20'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-20">&#182;</a>
+        </div>
+        <p>Load the meta data for this target section image.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>              <span class="nx">loadSectionInfo</span><span class="p">(</span><span class="nx">targetCoord</span><span class="p">.</span><span class="nx">section_image_id</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">targetSectionInfo</span><span class="p">)</span> <span class="p">{</span>
+                </pre></div>
+      </td>
+    </tr>
+    <tr id='section-21'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-21">&#182;</a>
+        </div>
+        <p>The results come back as an array, even if there&rsquo;s only one result.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>                <span class="nx">targetSectionInfo</span> <span class="o">=</span> <span class="nx">targetSectionInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+                </pre></div>
+      </td>
+    </tr>
+    <tr id='section-22'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-22">&#182;</a>
+        </div>
+        <p>Estimate a good downsample value based on target pixel resolution.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>                <span class="kd">var</span> <span class="nx">targetDownsample</span> <span class="o">=</span> <span class="nx">computeDownsample</span><span class="p">(</span><span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">resolution</span><span class="p">,</span> 
+                                     <span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">resolution</span><span class="p">,</span> 
+                                     <span class="nx">downsample</span><span class="p">);</span>
+                
+                <span class="kd">var</span> <span class="nx">imgUrl</span> <span class="o">=</span> <span class="nx">makeCenteredImageUrl</span><span class="p">(</span><span class="nx">targetDownsample</span><span class="p">,</span>
+                                  <span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> 
+                                  <span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">targetCoord</span><span class="p">.</span><span class="nx">y</span><span class="p">,</span> 
+                                  <span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">targetCoord</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span>
+                                  <span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+                
+                <span class="kd">var</span> <span class="nx">imgDiv</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#image&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;background&#39;</span><span class="p">,</span><span class="s1">&#39;no-repeat center url(&#39;</span><span class="o">+</span><span class="nx">imgUrl</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s1">&#39;loading&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">id</span> <span class="o">==</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="kd">var</span> <span class="nx">title</span> <span class="o">=</span> <span class="s2">&quot;Source &quot;</span> <span class="o">+</span> <span class="nx">geneName</span> <span class="o">+</span> <span class="s2">&quot; Section &quot;</span> <span class="o">+</span> 
+                    <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">data_set</span><span class="p">.</span><span class="nx">reference_space</span><span class="p">.</span><span class="nx">age</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">;</span>
+                  
+                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#imageTitle&quot;</span><span class="o">+</span><span class="nx">i</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">title</span><span class="p">);</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#imageTitle&quot;</span><span class="o">+</span><span class="nx">i</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">targetSectionInfo</span><span class="p">.</span><span class="nx">data_set</span><span class="p">.</span><span class="nx">reference_space</span><span class="p">.</span><span class="nx">age</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+                <span class="p">}</span>
+              <span class="p">});</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+              <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#image&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s1">&#39;loading&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">);</span>
+            <span class="p">}</span>
+          <span class="p">});</span>
+        <span class="p">});</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-23'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-23">&#182;</a>
+        </div>
+        <p>pull out a list of dataSetIds from the response meta data.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>        <span class="kd">var</span> <span class="nx">atlasIds</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">atlases</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span> <span class="p">});</span>
+
+        <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">atlasIds</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">atlasId</span><span class="p">)</span> <span class="p">{</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-24'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-24">&#182;</a>
+        </div>
+        <p>Use the <code>image_to_atlas</code> service to find the nearest point on an atlas.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>          <span class="nx">imageToAtlas</span><span class="p">(</span><span class="nx">cx</span><span class="p">,</span> <span class="nx">cy</span><span class="p">,</span> <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">atlasId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">atlasCoord</span><span class="p">)</span> <span class="p">{</span>
+            
+            <span class="nx">atlasCoord</span> <span class="o">=</span> <span class="nx">atlasCoord</span><span class="p">.</span><span class="nx">image_sync</span><span class="p">;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-25'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-25">&#182;</a>
+        </div>
+        <p>Load the meta data for the atlas and build an image of it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>            <span class="nx">loadAtlasImageInfo</span><span class="p">(</span><span class="nx">atlasCoord</span><span class="p">.</span><span class="nx">section_image_id</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">atlasImage</span><span class="p">)</span> <span class="p">{</span>
+
+              <span class="nx">atlasImage</span> <span class="o">=</span> <span class="nx">atlasImage</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-26'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-26">&#182;</a>
+        </div>
+        <p>Estimate a good downsample value based on target pixel resolution.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>              <span class="kd">var</span> <span class="nx">targetDownsample</span> <span class="o">=</span> <span class="nx">computeDownsample</span><span class="p">(</span><span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">resolution</span><span class="p">,</span> 
+                                   <span class="nx">atlasImage</span><span class="p">.</span><span class="nx">resolution</span><span class="p">,</span> 
+                                   <span class="nx">downsample</span><span class="p">);</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-27'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-27">&#182;</a>
+        </div>
+        <p>The adult mouse reference atlases refer to the unannotated
+NISSL images.  The annotated sections are stored in 
+<code>alternate_images</code>, so use that if it exists.  Other atlases
+are stored only as annoated sections.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>              <span class="kd">var</span> <span class="nx">atlasImagePath</span> <span class="o">=</span> <span class="p">(</span><span class="nx">atlasImage</span><span class="p">.</span><span class="nx">alternate_images</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span>
+                <span class="nx">atlasImage</span><span class="p">.</span><span class="nx">alternate_images</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">path</span> <span class="o">:</span>
+                <span class="nx">atlasImage</span><span class="p">.</span><span class="nx">path</span><span class="p">;</span>
+
+              <span class="kd">var</span> <span class="nx">atlasUrl</span> <span class="o">=</span> <span class="nx">makeCenteredImageUrl</span><span class="p">(</span><span class="nx">targetDownsample</span><span class="p">,</span> 
+                                <span class="nx">atlasImagePath</span><span class="p">,</span>
+                                <span class="nx">atlasImage</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">atlasCoord</span><span class="p">.</span><span class="nx">y</span><span class="p">,</span> 
+                                <span class="nx">atlasImage</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">atlasCoord</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span> 
+                                <span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+
+              <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#atlas&#39;</span><span class="o">+</span><span class="nx">i</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;background&#39;</span><span class="p">,</span><span class="s1">&#39;no-repeat center url(&#39;</span><span class="o">+</span><span class="nx">atlasUrl</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">removeClass</span><span class="p">(</span><span class="s1">&#39;loading&#39;</span><span class="p">);</span>
+
+              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#atlasTitle&quot;</span><span class="o">+</span><span class="nx">i</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">atlases</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">);</span>
+            <span class="p">});</span>
+          <span class="p">});</span>
+        <span class="p">});</span>
+      <span class="p">});</span>
+    <span class="p">});</span>
+  <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-28'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-28">&#182;</a>
+        </div>
+        <p>Find the pixel and section index in one SectionDataSet corresponding to a 
+pixel location in a section image.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">imageToImage</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">,</span> <span class="nx">fromSectionImageId</span><span class="p">,</span> <span class="nx">toSectionDataSetId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">toSectionDataSetId</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="nx">toSectionDataSetId</span> <span class="o">=</span> <span class="nx">toSectionDataSetId</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s1">&#39;image_to_image/&#39;</span> <span class="o">+</span> <span class="nx">fromSectionImageId</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span> <span class="o">+</span>
+    <span class="s1">&#39;?x=&#39;</span> <span class="o">+</span> <span class="nx">x</span> <span class="o">+</span>
+    <span class="s1">&#39;&amp;y=&#39;</span> <span class="o">+</span> <span class="nx">y</span> <span class="o">+</span> 
+    <span class="s1">&#39;&amp;section_data_set_ids=&#39;</span> <span class="o">+</span> <span class="nx">toSectionDataSetId</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-29'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-29">&#182;</a>
+        </div>
+        <p>Load the meta data for a atlas image based on its SectionDataSetId.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">loadAtlasImageInfo</span><span class="p">(</span><span class="nx">sectionId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s1">&#39;data/AtlasImage/&#39;</span><span class="o">+</span><span class="nx">sectionId</span><span class="o">+</span><span class="s1">&#39;.json&#39;</span> <span class="o">+</span> 
+    <span class="s1">&#39;?include=alternate_images&#39;</span><span class="p">;</span>
+  
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-30'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-30">&#182;</a>
+        </div>
+        <p>Find the pixel and section index in an atlas corresponding to a pixel location
+in a section image.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">imageToAtlas</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">,</span> <span class="nx">sectionImageId</span><span class="p">,</span> <span class="nx">atlasId</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s1">&#39;image_to_atlas/&#39;</span> <span class="o">+</span> <span class="nx">sectionImageId</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span> <span class="o">+</span>
+    <span class="s1">&#39;?x=&#39;</span> <span class="o">+</span> <span class="nx">x</span> <span class="o">+</span>
+    <span class="s1">&#39;&amp;y=&#39;</span> <span class="o">+</span> <span class="nx">y</span> <span class="o">+</span> 
+    <span class="s1">&#39;&amp;atlas_id=&#39;</span> <span class="o">+</span> <span class="nx">atlasId</span><span class="p">;</span>
+
+    <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-31'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-31">&#182;</a>
+        </div>
+        <p>Helper function to build imageservice urls.  For this type of query, you 
+supply the upper left pixel index in full resolution image coordinates and
+width and height in the coordinates at your desired downsampled tier.  </p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">makeImageUrl</span><span class="p">(</span><span class="nx">downsample</span><span class="p">,</span> <span class="nx">path</span><span class="p">,</span> <span class="nx">top</span><span class="p">,</span> <span class="nx">left</span><span class="p">,</span> <span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">svcPath</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> 
+    <span class="s1">&#39;downsample=&#39;</span> <span class="o">+</span> <span class="nx">downsample</span> <span class="o">+</span>
+    <span class="s1">&#39;&amp;path=&#39;</span> <span class="o">+</span> <span class="nx">path</span> <span class="o">+</span> 
+    <span class="s1">&#39;&amp;top=&#39;</span> <span class="o">+</span> <span class="nx">top</span> <span class="o">+</span>
+    <span class="s1">&#39;&amp;left=&#39;</span> <span class="o">+</span> <span class="nx">left</span> <span class="o">+</span>
+    <span class="s2">&quot;&amp;width=&quot;</span> <span class="o">+</span> <span class="nx">width</span> <span class="o">+</span> 
+    <span class="s2">&quot;&amp;height=&quot;</span> <span class="o">+</span> <span class="nx">height</span><span class="p">;</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-32'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-32">&#182;</a>
+        </div>
+        <p>This method wraps <code>makeImageUrl</code> to simplify drawing an image at given size that
+is centered around a single pixel in full-resolution image coordinates.  The
+coordinate, width, and height of the image must be used to calculate the position
+of the upper-left pixel of the image in full resolution coordinates.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">makeCenteredImageUrl</span><span class="p">(</span><span class="nx">downsample</span><span class="p">,</span> <span class="nx">path</span><span class="p">,</span> <span class="nx">cy</span><span class="p">,</span> <span class="nx">cx</span><span class="p">,</span> <span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">scale</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="nx">downsample</span><span class="p">);</span> 
+  <span class="kd">var</span> <span class="nx">left</span> <span class="o">=</span> <span class="nx">cx</span> <span class="o">-</span> <span class="nx">width</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="nx">scale</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">top</span> <span class="o">=</span> <span class="nx">cy</span> <span class="o">-</span> <span class="nx">height</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="nx">scale</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="nx">makeImageUrl</span><span class="p">(</span><span class="nx">downsample</span><span class="p">,</span> <span class="nx">path</span><span class="p">,</span> <span class="nx">top</span><span class="p">,</span> <span class="nx">left</span><span class="p">,</span> <span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-33'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-33">&#182;</a>
+        </div>
+        <p>This function splits the URL parameter string into a javascript hash.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">getUrlVars</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">vars</span> <span class="o">=</span> <span class="p">[],</span> <span class="nx">hash</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">hashes</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">hashes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="nx">hash</span> <span class="o">=</span> <span class="nx">hashes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">);</span>
+    <span class="nx">vars</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="nx">vars</span><span class="p">[</span><span class="nx">hash</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nx">hash</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">vars</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">loadDataSets</span><span class="p">(</span><span class="nx">gene</span><span class="p">,</span> <span class="nx">age_names</span><span class="p">,</span> <span class="nx">product</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> 
+    <span class="s2">&quot;data/SectionDataSet/query.json&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;?criteria=[failed$eqfalse]&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;&amp;include=genes[id$eq&quot;</span> <span class="o">+</span> <span class="nx">gene</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;,products[id$eq&quot;</span> <span class="o">+</span> <span class="nx">product</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;,specimen(donor(age[name$in&#39;&quot;</span> <span class="o">+</span> <span class="nx">age_names</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;]))&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;,rma::options[order$eq&#39;ages.embryonic$desc,ages.days&#39;]&quot;</span><span class="p">;</span>
+
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">loadAtlases</span><span class="p">(</span><span class="nx">age_names</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">ageStr</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="nx">age_names</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> 
+    <span class="s2">&quot;data/Atlas/query.json?include=reference_space(age[name$in&quot;</span><span class="o">+</span><span class="nx">ageStr</span><span class="o">+</span><span class="s2">&quot;])&quot;</span> <span class="o">+</span> 
+    <span class="s2">&quot;&amp;order=ages.embryonic$desc,ages.days&quot;</span><span class="p">;</span>
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">loadSectionInfo</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s1">&#39;data/SectionImage/&#39;</span><span class="o">+</span><span class="nx">id</span><span class="o">+</span><span class="s1">&#39;.json?include=data_set(genes,reference_space(age))&#39;</span><span class="p">;</span>
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">loadReferenceSpaceInfo</span><span class="p">(</span><span class="nx">ids</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">apiPath</span> <span class="o">+</span> <span class="s2">&quot;data/ReferenceSpace/query.json?&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;criteria=[id$in&quot;</span> <span class="o">+</span> <span class="nx">ids</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&amp;&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;include=age&amp;&quot;</span> <span class="o">+</span>
+    <span class="s2">&quot;order=ages.days&quot;</span><span class="p">;</span>
+  
+  <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">initializeImageDiv</span><span class="p">(</span><span class="nx">div</span><span class="p">,</span> <span class="nx">downsample</span><span class="p">,</span> <span class="nx">sectionInfo</span><span class="p">,</span> <span class="nx">sectionCoord</span><span class="p">,</span> <span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">imgUrl</span> <span class="o">=</span> <span class="nx">makeCenteredImageUrl</span><span class="p">(</span><span class="nx">downsample</span><span class="p">,</span>
+                    <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> 
+                    <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">sectionCoord</span><span class="p">.</span><span class="nx">y</span><span class="p">,</span> 
+                    <span class="nx">sectionInfo</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="nx">sectionCoord</span><span class="p">.</span><span class="nx">x</span><span class="p">,</span>
+                    <span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+  
+  <span class="nx">div</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;background&#39;</span><span class="p">,</span><span class="s1">&#39;no-repeat center url(&#39;</span><span class="o">+</span><span class="nx">imgUrl</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-34'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-34">&#182;</a>
+        </div>
+        <p>Make a simple apiQuery, no handling of pages.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">apiQuery</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">onsuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="p">{</span> 
+    <span class="nx">dataType</span><span class="o">:</span> <span class="s1">&#39;json&#39;</span><span class="p">,</span> 
+    <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span> 
+
+      <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span>
+        <span class="nx">onsuccess</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">);</span> 
+      <span class="k">else</span>
+        <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span> <span class="p">{</span> 
+      <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusText</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span> 
+    <span class="p">}</span>
+  <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-35'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-35">&#182;</a>
+        </div>
+        <p>A simple catch-all error reporting function.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">apiError</span><span class="p">(</span><span class="nx">response</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">errorHtml</span> <span class="o">=</span> 
+    <span class="s2">&quot;&lt;p&gt;There was an error with the following query:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+    <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">url</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+    <span class="s2">&quot;&lt;p&gt;Error message:&lt;/p&gt;&quot;</span> <span class="o">+</span> 
+    <span class="s2">&quot;&lt;p&gt;&quot;</span> <span class="o">+</span> <span class="nx">response</span> <span class="o">+</span> <span class="s2">&quot;&lt;/p&gt;&quot;</span><span class="p">;</span>
+  
+  <span class="kd">var</span> <span class="nx">dialog</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">);</span>
+
+  <span class="kd">var</span> <span class="nx">existingErrors</span> <span class="o">=</span> <span class="nx">dialog</span><span class="p">.</span><span class="nx">html</span><span class="p">();</span>
+
+  <span class="nx">$</span><span class="p">(</span> <span class="s2">&quot;#errorDialog&quot;</span> <span class="p">)</span>
+    <span class="p">.</span><span class="nx">html</span><span class="p">(</span><span class="nx">existingErrors</span> <span class="o">+</span> <span class="nx">errorHtml</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">dialog</span><span class="p">({</span>
+      <span class="nx">width</span><span class="o">:</span> <span class="mi">500</span><span class="p">,</span>
+      <span class="nx">height</span><span class="o">:</span> <span class="mi">200</span><span class="p">,</span>
+      <span class="nx">modal</span><span class="o">:</span> <span class="kc">true</span>
+    <span class="p">});</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-36'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-36">&#182;</a>
+        </div>
+        <p>Sections have pixel resolution (in microns).  The source  section was 
+downsampled by the value of the <code>downsample</code> variable, but we may need to use
+a different value for the target if it has a different pixel resolution.</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="kd">function</span> <span class="nx">computeDownsample</span><span class="p">(</span><span class="nx">sourceResolution</span><span class="p">,</span> <span class="nx">targetResolution</span><span class="p">,</span> <span class="nx">sourceDownsample</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nx">sourceResolution</span> <span class="o">/</span> <span class="nx">targetResolution</span><span class="p">;</span>
+  <span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">round</span><span class="p">(</span> <span class="nx">sourceDownsample</span> <span class="o">+</span> <span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span><span class="o">/</span><span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="p">);</span>
+<span class="p">}</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
