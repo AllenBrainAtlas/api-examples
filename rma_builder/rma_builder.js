@@ -328,7 +328,7 @@ function regenerate() {
   var query = regenerate_query();
 
   var query_text = query.join('<br />');
-  var query_url = query.join('');
+  var query_url = query.join('').replace(/(,)+/,',').replace(/,$/,'');
 
   var query_link = 'Execute Query and Display Result Data in new window:<a target="_rma" href="' + query_url + '">Link</a>'
 
