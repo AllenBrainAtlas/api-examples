@@ -1,0 +1,527 @@
+<html>
+
+<head>
+ <title>RMA Builder</title>
+ <link rel="stylesheet" type="text/css" href="rma_builder.css" />
+ <script type="text/javascript" src="jquery.js"></script>
+ <script type="text/javascript" src="rma_builder.js"></script>
+
+ <script type="text/javascript">
+   var RMA_ENDPOINT = '/api/v2/data';
+ </script>
+
+</head>
+
+<body>
+
+<div class="stage">
+    <b>DOCUMENT OPTIONS</b>
+    <span style="float: right" class="help_link"><a href="/doc/index.html#RESTful_Model_Access__RMA_" target="help">RMA Syntax help</a></span>
+    <br /><br />
+
+    Endpoint:
+    <select class="request endpoint">
+        <option value="http://api.brain-map.org/api/v2/data">Allen Institute API</option>
+    </select>
+
+    Format:
+    <select class="request format">
+      <option value="xml">XML</option>
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+    </select>
+
+
+</div>
+
+<table style="width:90%">
+    <tr>
+        <td style="width: 50%; border:  1px solid gray;">
+           <div class="workspace"></div>
+        </td>
+        <td style="width: 50%; border:  1px solid gray; vertical-align: top">
+           Build RMA Query URL and Link<input id="regenerate" type="button" value="Build Query" title="Build Query and Link" /><br />
+           <div style="width: 100%;" class="generated"></div>
+<!--
+           Execute RMA Query and Display Results <input id="reload" type="button" value="Reload" title="Execute Query" /><br />
+           <div style="width: 100%; height: 300px; overflow-y: scroll" class="results"></div>
+-->
+        </td>
+    </tr>
+</table>
+
+Add Stage
+<input id="model" type="button" value="Model" title="add a model stage" />
+<input id="service" type="button" value="Service" title="add a service stage" />
+<input id="pipe" type="button" value="Pipe" title="add a pipe stage" />
+
+<div class="template">
+
+    <div class="stage service">
+        <b>SERVICE STAGE</b><input type="button" class="delete" value="x" /><br /><br />
+
+        Services:
+        <select class="service_name">
+            //
+            // informatics
+            //
+
+            // dev_human
+            <option class="dev_human_correlation" value="dev_human_correlation">Developmental Human Correlation</option>
+            <option class="dev_human_differential" value="dev_human_differential">Developmental Human Differential</option>
+            <option class="dev_human_expression" value="dev_human_expression">Developmental Human Expression</option>
+
+            // dev_human_microarray
+            <option class="dev_human_microarray_correlation" value="dev_human_microarray_correlation">Developmental Human Microarray Correlation</option>
+            <option class="dev_human_microarray_differential" value="dev_human_microarray_differential">Developmental Human Microarray Differential</option>
+            <option class="dev_human_microarray_expression" value="dev_human_microarray_expression">Developmental Human Microarray Expression</option>
+
+            // human_microarray
+            <option class="human_microarray_correlation" value="human_microarray_correlation">Human Microarray Correlation</option>
+            <option class="human_microarray_differential" value="human_microarray_differential">Human Microarray Differential</option>
+            <option class="human_microarray_expression" value="human_microarray_expression">Human Microarray Expression</option>
+
+            // mouse
+            <option class="mouse_agea" value="mouse_agea">Mouse AGEA</option>
+            <option class="mouse_correlation" value="mouse_correlation">Mouse Correlation</option>
+            <option class="mouse_differential" value="mouse_differential">Mouse Differential</option>
+
+            // nhp
+            <option class="nhp_microarray_correlation" value="nhp_microarray_correlation">NHP Microarray Correlation</option>
+            <option class="nhp_microarray_differential" value="nhp_microarray_differential">NHP Microarray Differential</option>
+            <option class="nhp_microarray_expression" value="nhp_microarray_expression">NHP Microarray Expression</option>
+
+            // non-informatics
+            <option class="text_search" value="text_search">Text Search</option>
+        </select>
+
+
+        <div class="service parameters"></div>
+    </div>
+
+    <div class="dev_human_correlation_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="rna_seq_genes">rna_seq_genes</option>
+            <option value="rna_seq_exons">rna_seq_exons</option>
+            <option value="exon_microarray_genes">exon_microarray_genes</option>
+            <option value="exon_microarray_exons">exon_microarray_exons</option>
+        </select><br />
+        Donors:
+        <input type="text" name="donors" class="parameter optional"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter optional"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort Order:
+        <select name="sort_order" class="parameter optional">
+          <option value=""></option>
+          <option value="asc">asc</option>
+          <option value="desc">desc</option>
+        </select>
+    </div>
+
+    <div class="dev_human_differential_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="rna_seq_genes">rna_seq_genes</option>
+            <option value="rna_seq_exons">rna_seq_exons</option>
+            <option value="exon_microarray_genes">exon_microarray_genes</option>
+            <option value="exon_microarray_exons">exon_microarray_exons</option>
+        </select><br />
+        Donors 1:
+        <input type="text" name="donors1" class="parameter"/><br />
+        Structures 1:
+        <input type="text" name="structures1" class="parameter"/><br />
+        Donors 2:
+        <input type="text" name="donors2" class="parameter"/><br />
+        Structures 2:
+        <input type="text" name="structures2" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+        Sort By:
+        <select name="sort_by" class="parameter">
+          <option value=""></option>
+          <option value="fold-change">fold-change</option>
+          <option value="p-value">p-value</option>
+        </select>
+    </div>
+
+    <div class="dev_human_expression_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="rna_seq_genes">rna_seq_genes</option>
+            <option value="rna_seq_exons">rna_seq_exons</option>
+            <option value="exon_microarray_genes">exon_microarray_genes</option>
+            <option value="exon_microarray_exons">exon_microarray_exons</option>
+        </select><br />
+        Donors:
+        <input type="text" name="donors" class="parameter"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+    </div>
+
+    <div class="dev_human_microarray_correlation_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter optional"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter optional"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort Order:
+        <select name="sort_order" class="parameter optional">
+          <option value=""></option>
+          <option value="asc">asc</option>
+          <option value="desc">desc</option>
+        </select>
+    </div>
+
+    <div class="dev_human_microarray_differential_parameters">
+        Donors 1:
+        <input type="text" name="donors1" class="parameter"/><br />
+        Structures 1:
+        <input type="text" name="structures1" class="parameter"/><br />
+        Donors 2:
+        <input type="text" name="donors2" class="parameter"/><br />
+        Structures 2:
+        <input type="text" name="structures2" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+        Sort By:
+        <select name="sort_by" class="parameter">
+          <option value=""></option>
+          <option value="fold-change">fold-change</option>
+          <option value="p-value">p-value</option>
+        </select>
+    </div>
+
+    <div class="dev_human_microarray_expression_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+    </div>
+
+    <div class="human_microarray_correlation_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter optional"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter optional"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort Order:
+        <select name="sort_order" class="parameter optional">
+          <option value=""></option>
+          <option value="asc">asc</option>
+          <option value="desc">desc</option>
+        </select>
+    </div>
+
+    <div class="human_microarray_differential_parameters">
+        Donors 1:
+        <input type="text" name="donors1" class="parameter"/><br />
+        Structures 1:
+        <input type="text" name="structures1" class="parameter"/><br />
+        Donors 2:
+        <input type="text" name="donors2" class="parameter"/><br />
+        Structures 2:
+        <input type="text" name="structures2" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+        Sort By:
+        <select name="sort_by" class="parameter">
+          <option value=""></option>
+          <option value="fold-change">fold-change</option>
+          <option value="p-value">p-value</option>
+        </select>
+    </div>
+
+    <div class="human_microarray_expression_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+    </div>
+
+    <div class="mouse_agea_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="mouse_coronal">mouse_coronal</option>
+        </select><br />
+        Seed Age:
+        <select name="seed_age" class="parameter">
+            <option value="P56">P56</option>
+        </select><br />
+        Seed Point:
+        <input type="text" name="seed_point" class="parameter optional"/><br />
+        Map Age:
+        <select name="map_age" class="parameter">
+            <option value="P56">P56</option>
+        </select><br />
+        Correlation Threshold 1:
+        <input type="text" name="correlation_threshold1" class="parameter optional"/><br />
+        Correlation Threshold 2:
+        <input type="text" name="correlation_threshold2" class="parameter optional"/><br />
+        Domain 1 Threshold:
+        <input type="text" name="threshold1" class="parameter optional"/><br />
+        Domain 2 Threshold:
+        <input type="text" name="threshold2" class="parameter optional"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+    </div>
+
+    <div class="mouse_correlation_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="mouse">mouse</option>
+            <option value="mouse_coronal">mouse_coronal</option>
+        </select><br />
+        Structures:
+        <input type="text" name="structures" class="parameter optional"/><br />
+        Row:
+        <input type="text" name="row" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort Order:
+        <select name="sort_order" class="parameter optional">
+          <option value=""></option>
+          <option value="asc">asc</option>
+          <option value="desc">desc</option>
+        </select>
+    </div>
+
+    <div class="mouse_differential_parameters">
+        Set:
+        <select name="set" class="parameter">
+            <option value="mouse">mouse</option>
+            <option value="mouse_coronal">mouse_coronal</option>
+        </select><br />
+        Structures 1:
+        <input type="text" name="structures1" class="parameter optional"/><br />
+        Structures 2:
+        <input type="text" name="structures2" class="parameter optional"/><br />
+        Threshold 1:
+        <input type="text" name="threshold1" class="parameter optional"/><br />
+        Threshold 2:
+        <input type="text" name="threshold2" class="parameter optional"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort By:
+        <select name="sort_by" class="parameter optional">
+          <option value=""></option>
+          <option value="fold-change">fold-change</option>
+          <option value="p-value">p-value</option>
+        </select>
+    </div>
+
+    <div class="nhp_microarray_correlation_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter optional"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter optional"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter optional"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter optional"/><br />
+        Sort Order:
+        <select name="sort_order" class="parameter optional">
+          <option value=""></option>
+          <option value="asc">asc</option>
+          <option value="desc">desc</option>
+        </select>
+    </div>
+
+    <div class="nhp_microarray_differential_parameters">
+        Donors 1:
+        <input type="text" name="donors1" class="parameter"/><br />
+        Structures 1:
+        <input type="text" name="structures1" class="parameter"/><br />
+        Donors 2:
+        <input type="text" name="donors2" class="parameter"/><br />
+        Structures 2:
+        <input type="text" name="structures2" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+        Sort By:
+        <select name="sort_by" class="parameter">
+          <option value=""></option>
+          <option value="fold-change">fold-change</option>
+          <option value="p-value">p-value</option>
+        </select>
+    </div>
+
+    <div class="nhp_microarray_expression_parameters">
+        Donors:
+        <input type="text" name="donors" class="parameter"/><br />
+        Structures:
+        <input type="text" name="structures" class="parameter"/><br />
+        Probes:
+        <input type="text" name="probes" class="parameter"/><br />
+        Start Row:
+        <input type="text" name="start_row" class="parameter"/><br />
+        Num Rows:
+        <input type="text" name="num_rows" class="parameter"/><br />
+    </div>
+
+    <div class="text_search_parameters">
+      Query String: <input type="text" name="query_string" class="parameter" rows="1" cols="30" /><br />
+      Search Model: <span class="model_parameter"></span><br />
+      <!--
+      Search (?): <input type="text" name="search" class="parameter" rows="1" cols="30" /><br />
+      Filter (?): <input type="text" name="filter" class="parameter" rows="1" cols="30" />
+      -->
+    </div>
+
+    <div class="stage model">
+        <b>MODEL STAGE</b><input type="button" title="remove stage" class="delete" value="X" /><br /><br />
+
+        <div class="group selection">
+            <b>Selection</b><br /><br />
+
+            Model:<br />
+            <select class="model_name"></select><input title="add filter clause on model attribute" class="model brackets" type="button" value="[]" />
+            <div style="margin-left: 20px" class="model filters"></div>
+            <br />
+            Criteria: <span class="model criteria"></span>
+        </div>
+
+        <div class="group">
+            <b>Display</b><br /><br />
+
+            Include: <span class="includes"></span>
+            <br />
+            Only: <div class="model only"></div>
+            Except: <div class="model except"></div>
+        </div>
+
+        <div class="group">
+            <b>Sorting and Paging</b><br /><br />
+
+            Order: <div class="model order"></div>
+            <br />
+            Number&nbsp;of&nbsp;Rows:&nbsp;<input type="text" class="model num_rows" rows="1" cols="4" />
+            Start&nbsp;Row:&nbsp;<input type="text" class="model start_row" rows="1" cols="4" />
+        </div>
+    </div>
+
+    <div class="associations">
+      <span class="association"></span>
+      <input title="add sibling association to path" class="comma" type="button" value="," />
+      <input title="add nested association to path" class="parentheses" type="button" value="()" />
+      <input title="add filter clause to association" class="brackets" type="button" value="[]" />
+      <input title="delete association from path" class="delete" type="button" value="X" />
+      <div style="margin-left: 20px" class="filters"></div>
+      <div style="margin-left: 20px" class="nested associations"></div>
+    </div>
+
+    <div class="model filter">
+        <span class="variable"></span>
+        <select class="operator">
+            <option value="$eq" selected="selected">=</option>
+            <option value="$ge">&gt;=</option>
+            <option value="$gt">&gt;</option>
+            <option value="$il">ilike</option>
+            <option value="$in">in</option>
+            <option value="$le">&gt;=</option>
+            <option value="$li">like</option>
+            <option value="$lt">&lt;</option>
+            <option value="$ne">&lt;&gt;</option>
+        </select>
+        <input type="text" class="argument" rows="1" cols="30" />
+        <input title="delete filter clause" class="delete" type="button" value="X" />
+    </div>
+
+    <div class="model only except">
+        <select class="model_qualifier">
+            <option value="">[unqualified]</option>
+        </select> .
+        <select class="attribute">
+            <option value="">[none]</option>
+        </select>
+        <input title="add attribute to list" class="comma" type="button" value="," />
+        <input title="delete attribute from list" class="delete" type="button" value="X" />
+    </div>
+
+    <div class="model order">
+        <select class="model_qualifier">
+            <option value="">[unqualified]</option>
+        </select> .
+        <select class="attribute">
+            <option value="">[none]</option>
+        </select>
+        <select class="direction">
+            <option value="">[none]</option>
+            <option value="asc">asc</option>
+            <option value="desc">desc</option>
+        </select>
+        <input title="add attribute for order clause" class="comma" type="button" value="," />
+        <input title="delete attribute from order clause" class="delete" type="button" value="X" />
+    </div>
+
+    <div class="stage pipe">
+        <b>PIPE STAGE</b><input title="delete pipe stage" type="button" class="delete" value="X" /><br /><br />
+
+        Pipe:
+        <select class="pipe_name">
+            <option value="list">List</option>
+        </select>
+
+        variable:
+        <input type="text" class="pipe variable" rows="1" cols="10" />
+
+        path:
+        <input type="text" class="pipe path" rows="1" cols="20" />
+    </div>
+
+  </div>
+
+</body>
+</html>

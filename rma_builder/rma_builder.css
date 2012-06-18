@@ -1,0 +1,35 @@
+body, tr, td, b, div {
+    font-family: verdana;
+    font-size: 10px;
+}
+
+.stage {
+    border: 3px solid gray;
+    width: 90%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.pipe {
+    margin-left: 10%;
+    width: 80%;
+}
+
+.group {
+    border: 1px dotted gray;
+    width: auto;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.template {
+    visibility: hidden;
+}
+
+.generated {
+  width: 200px;
+}
+
+input.delete {
+    color: red;
+}
