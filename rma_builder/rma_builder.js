@@ -34,6 +34,20 @@ function get_schema() {
   return schema_hash;
 }
 
+function get_local_schema() {
+    var schema_hash = {};
+    
+      $.each(_enumerate.msg,function() {
+          for(model_name in this['DataDescription']) {
+              schema_hash[model_name] = this['DataDescription'][model_name];
+              _models.push(model_name);
+          }
+      });
+      _models = _models.sort();
+       	 	
+    return schema_hash;
+}
+
 function populate_dropdowns() {
     //  model dropdown template
     var model_name_select = $('.template .stage.model .model_name');
@@ -598,7 +612,7 @@ function add_service_stage() {
 $(document).ready(function() {
     $.ajaxSetup({async:false});
 
-    _schema = get_schema();
+    _schema = get_local_schema();  // use get_schema() instead to retrieve schema from the endpoint
     populate_dropdowns();
 
     $("input#model").click(function() { add_model_stage(); });
@@ -616,7 +630,7 @@ $(document).ready(function() {
 
     $("select.endpoint").change(function() {
       _models = [];
-      _schema = get_schema();
+      _schema = get_local_schema();
       $('.workspace').empty();
     });
 });
