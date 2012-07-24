@@ -13,7 +13,7 @@
 
 # A function returning the path of the API.
 getApiPath <- function() {
-	return "http://ibs-davidf-ux1:3000"
+	return("http://api.brain-map.org")
 }
 
 # Download all of the rows available from a supplied API query.  
@@ -65,8 +65,8 @@ downloadSampleProperties <- function(sampleInfo) {
 
 	for (i in 1:numSamples) {
 		s = downloadStructure(structureIDs[i])
-		structureOrders[i] <- s$st_order
-		structureColors[i] <- rgb(s$red,s$green,s$blue,maxColorValue=255);
+		structureOrders[i] <- s$graph_order
+		structureColors[i] <- paste("#",s$color_hex_triplet,sep="")
 	}
 
 	sampleInfo[,"order"] <- structureOrders
