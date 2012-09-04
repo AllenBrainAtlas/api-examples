@@ -32,8 +32,8 @@ API_DATA_PATH = API_SERVER + "api/v2/data/"
 STRUCTURE_GRAPH_ID = 1
 REFERENCE_SPACE_ID = 10
 
-STRUCTURES_URL = ("%s/OntologyNode/query.json?" +\
-                      "criteria=[structure_graph_id$eq%d]") \
+STRUCTURES_URL = ("%s/Structure/query.json?" +\
+                      "criteria=[graph_id$eq%d]") \
                       % (API_DATA_PATH, STRUCTURE_GRAPH_ID)
 
 REFERENCE_SPACE_URL = ("%s/ReferenceSpace/query.json?criteria=[id$eq%d]" + \
@@ -120,13 +120,14 @@ def DownloadOntology():
     
     for i in xrange(len(structures)):
         s = structures[i]
+        s['structure_id_path'] = map(int, s['structure_id_path'].strip('/').split('/'))
         s['parent'] = None
         s['sum1'] = 0.0
         s['volume1'] = 0
         s['sum2'] = 0.0
         s['volume2'] = 0
 
-        structureHash[s['structure_id']] = s
+        structureHash[s['id']] = s
 
     # Make it a bit clearer who the parent of this structure is.
     for sid,s in structureHash.iteritems():

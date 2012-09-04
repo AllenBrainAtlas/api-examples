@@ -30,8 +30,18 @@
         <div class="pilwrap">
           <a class="pilcrow" href="#section-1">&#182;</a>
         </div>
-        <p>A an example visualization of adult mouse gene expression data using the D3 
-partition and radial layouts.</p>
+        <p>Copyright 2012 Allen Institute for Brain Science
+Licensed under the Apache License, Version 2.0 (the &ldquo;License&rdquo;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p>http://www.apache.org/licenses/LICENSE-2.0</p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &ldquo;AS IS&rdquo; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
       </td>
       <td class=code>
         <div class='highlight'><pre></pre></div>
@@ -41,6 +51,18 @@ partition and radial layouts.</p>
       <td class=docs>
         <div class="pilwrap">
           <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>A an example visualization of adult mouse gene expression data using the D3 
+partition and radial layouts.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
         </div>
         <p>This uses the Modernizr JS library to check to see if the page supports SVG.
 If it does not, throw an error.</p>
@@ -56,10 +78,10 @@ If it does not, throw an error.</p>
 <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-3'>
+    <tr id='section-4'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-3">&#182;</a>
+          <a class="pilcrow" href="#section-4">&#182;</a>
         </div>
         <p>Set default SectionDataSetId. Then parse the  parameter string and load a 
 specified id if requested. </p>
@@ -72,10 +94,10 @@ specified id if requested. </p>
   <span class="nx">sectionDataSetId</span> <span class="o">=</span>  <span class="nx">urlVars</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">];</span></pre></div>
       </td>
     </tr>
-    <tr id='section-4'>
+    <tr id='section-5'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-4">&#182;</a>
+          <a class="pilcrow" href="#section-5">&#182;</a>
         </div>
         <p>Constants defining various parameters of the visualization.</p>
 
@@ -90,15 +112,15 @@ specified id if requested. </p>
 <span class="kd">var</span> <span class="nx">h</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">height</span><span class="p">();</span>
 <span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
 <span class="kd">var</span> <span class="nx">outerWidth</span> <span class="o">=</span> <span class="nx">r</span><span class="o">/</span><span class="mf">3.5</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">expDomain</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">13</span><span class="p">];</span>
+<span class="kd">var</span> <span class="nx">expDomain</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">];</span>
 <span class="kd">var</span> <span class="nx">rootNode</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
 <span class="kd">var</span> <span class="nx">expressionHash</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span></pre></div>
       </td>
     </tr>
-    <tr id='section-5'>
+    <tr id='section-6'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-5">&#182;</a>
+          <a class="pilcrow" href="#section-6">&#182;</a>
         </div>
         <p>D3 scales, which interpolate linearly from a domain (default [0,1], unless 
 specified) to a range (also default [0,1]).  The <code>x</code> scale maps from D3&rsquo;s
@@ -115,10 +137,10 @@ around the outside of the ontology.  </p>
 <span class="kd">var</span> <span class="nx">highlightcolor</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scale</span><span class="p">.</span><span class="nx">linear</span><span class="p">().</span><span class="nx">domain</span><span class="p">(</span><span class="nx">expDomain</span><span class="p">).</span><span class="nx">range</span><span class="p">([</span><span class="s2">&quot;#eee&quot;</span><span class="p">,</span> <span class="s2">&quot;#fdd&quot;</span><span class="p">]);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-6'>
+    <tr id='section-7'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-6">&#182;</a>
+          <a class="pilcrow" href="#section-7">&#182;</a>
         </div>
         <p>Initialize page elements.  Most important, in this section the scale button
 options are initialized.  This allows the arcs depicting both ontological 
@@ -153,10 +175,10 @@ or uniformly.</p>
 <span class="nx">scaleButtonContainer</span><span class="p">.</span><span class="nx">buttonset</span><span class="p">();</span></pre></div>
       </td>
     </tr>
-    <tr id='section-7'>
+    <tr id='section-8'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-7">&#182;</a>
+          <a class="pilcrow" href="#section-8">&#182;</a>
         </div>
         <p>These functions are used by D3 to determine how large data arcs should be.</p>
       </td>
@@ -164,10 +186,10 @@ or uniformly.</p>
         <div class='highlight'><pre><span class="kd">function</span> <span class="nx">uniformValue</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-8'>
+    <tr id='section-9'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-8">&#182;</a>
+          <a class="pilcrow" href="#section-9">&#182;</a>
         </div>
         <p>If the expression hash doesn&rsquo;t contain a particular structure id, for 
 visualization purposes treat the structure as having no expression energy.</p>
@@ -179,10 +201,10 @@ visualization purposes treat the structure as having no expression energy.</p>
 <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-9'>
+    <tr id='section-10'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-9">&#182;</a>
+          <a class="pilcrow" href="#section-10">&#182;</a>
         </div>
         <p>Construct the main svg element, size it properly, and apply a global 
 transform shifts the origin to the center.</p>
@@ -196,10 +218,10 @@ transform shifts the origin to the center.</p>
   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">w</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">h</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-10'>
+    <tr id='section-11'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-10">&#182;</a>
+          <a class="pilcrow" href="#section-11">&#182;</a>
         </div>
         <p>This is the D3 partition layout.  It takes a hierarchical hash and 
 determines the relative proportion of children and their parents
@@ -211,10 +233,10 @@ in normalized coordinates [0,1].</p>
   <span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">uniformValue</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-11'>
+    <tr id='section-12'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-11">&#182;</a>
+          <a class="pilcrow" href="#section-12">&#182;</a>
         </div>
         <p>This arc map takes normalized layout coordinates, maps them to radians and
 radial pixel distance, then converts this to an actual SVG primitive.</p>
@@ -227,10 +249,10 @@ radial pixel distance, then converts this to an actual SVG primitive.</p>
   <span class="p">.</span><span class="nx">outerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">yOut</span><span class="p">(</span><span class="nx">expressionValue</span><span class="p">(</span><span class="nx">d</span><span class="p">))</span> <span class="o">:</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">y</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dy</span><span class="p">));</span> <span class="p">});</span></pre></div>
       </td>
     </tr>
-    <tr id='section-12'>
+    <tr id='section-13'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-12">&#182;</a>
+          <a class="pilcrow" href="#section-13">&#182;</a>
         </div>
         <p>Same as above, except for use in the gene expression bar chart.</p>
       </td>
@@ -242,10 +264,10 @@ radial pixel distance, then converts this to an actual SVG primitive.</p>
   <span class="p">.</span><span class="nx">outerRadius</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">r</span><span class="p">;</span> <span class="p">});</span></pre></div>
       </td>
     </tr>
-    <tr id='section-13'>
+    <tr id='section-14'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-13">&#182;</a>
+          <a class="pilcrow" href="#section-14">&#182;</a>
         </div>
         <p>Finally load the data and transform it into a D3-partition-able format.</p>
       </td>
@@ -257,10 +279,10 @@ radial pixel distance, then converts this to an actual SVG primitive.</p>
   <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#chart&quot;</span><span class="p">).</span><span class="nx">css</span><span class="p">(</span><span class="s2">&quot;background&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-14'>
+    <tr id='section-15'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-14">&#182;</a>
+          <a class="pilcrow" href="#section-15">&#182;</a>
         </div>
         <p>The mouseover highlight goes first, so that the actual visualization 
 elements will be drawn on top due to z-ordering.</p>
@@ -271,10 +293,10 @@ elements will be drawn on top due to z-ordering.</p>
     <span class="p">.</span><span class="nx">style</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;#eee&quot;</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-15'>
+    <tr id='section-16'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-15">&#182;</a>
+          <a class="pilcrow" href="#section-16">&#182;</a>
         </div>
         <p>The most important bit of code: this lays out the actual arcs, both for
 the ontology and the bar chart.  <code>vis</code> is the chart div defined in the 
@@ -300,10 +322,10 @@ path primitives.  The properties of these primites are then defined.</p>
     <span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">stash</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-16'>
+    <tr id='section-17'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-16">&#182;</a>
+          <a class="pilcrow" href="#section-17">&#182;</a>
         </div>
         <p>When the user mouses over a node, the properties of that node are displayed
 on the page and highlighted.  When the mouse leaves a node, these things are
@@ -325,10 +347,10 @@ erased.  </p>
   <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-17'>
+    <tr id='section-18'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-17">&#182;</a>
+          <a class="pilcrow" href="#section-18">&#182;</a>
         </div>
         <p>When a node is clicked, an interesting transition happens.  The <code>arcTween</code>
 method describes what happens during that transition.  <em>Note:</em> the <code>arcTween</code>
@@ -351,10 +373,10 @@ the position of the new root node).</p>
   <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-18'>
+    <tr id='section-19'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-18">&#182;</a>
+          <a class="pilcrow" href="#section-19">&#182;</a>
         </div>
         <p>These buttons re-layout the entire chart based on whether ontology leafs
 are scaled in proportion to their expression energy or if they all
@@ -378,10 +400,10 @@ the return value of the <code>dataTween</code> method.</p>
   <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-19'>
+    <tr id='section-20'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-19">&#182;</a>
+          <a class="pilcrow" href="#section-20">&#182;</a>
         </div>
         <p>Several functions that determine how the data nodes are displayed.
 If the nodes are leaves, they are colored by their z-score.  Otherwise
@@ -403,10 +425,10 @@ they are colored using ontological colors.</p>
   <span class="p">}</span>					   </pre></div>
       </td>
     </tr>
-    <tr id='section-20'>
+    <tr id='section-21'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-20">&#182;</a>
+          <a class="pilcrow" href="#section-21">&#182;</a>
         </div>
         <p>This function returns a callback used by D3&rsquo;s <code>attrTween</code> method to 
 transition the arcs so that a new node is the (visible) root of the ontology.
@@ -416,10 +438,10 @@ This is done by changing the domain and range <code>x</code> and <code>y</code> 
         <div class='highlight'><pre></pre></div>
       </td>
     </tr>
-    <tr id='section-21'>
+    <tr id='section-22'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-21">&#182;</a>
+          <a class="pilcrow" href="#section-22">&#182;</a>
         </div>
         <p>The first three variables are scale interpolators. The x domain normally 
 spans [0,1], but we&rsquo;re going to transition it to the x range of <code>d</code>. The same
@@ -435,10 +457,10 @@ interpolator ensures that the parent of the clicked node shows up in the center.
     </pre></div>
       </td>
     </tr>
-    <tr id='section-22'>
+    <tr id='section-23'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-22">&#182;</a>
+          <a class="pilcrow" href="#section-23">&#182;</a>
         </div>
         <p>For each node, return an interpolator function that D3 can use to transition.
 The scales only need to be modified once per transition step, so only do this
@@ -454,10 +476,10 @@ which uses our newly updated scales to produce new curves.</p>
   <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-23'>
+    <tr id='section-24'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-23">&#182;</a>
+          <a class="pilcrow" href="#section-24">&#182;</a>
         </div>
         <p>Cache the current location of an element.</p>
       </td>
@@ -468,10 +490,10 @@ which uses our newly updated scales to produce new curves.</p>
   <span class="p">}</span></pre></div>
       </td>
     </tr>
-    <tr id='section-24'>
+    <tr id='section-25'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-24">&#182;</a>
+          <a class="pilcrow" href="#section-25">&#182;</a>
         </div>
         <p>This is a slightly more complicated transition, called when the data scaling
 variable has changed.  This means all of the nodes have new positions and 
@@ -487,10 +509,10 @@ node <code>r</code> has a new position as well.</p>
       <span class="kd">var</span> <span class="nx">arci</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">interpolate</span><span class="p">({</span><span class="nx">x</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">x0</span><span class="p">,</span> <span class="nx">dx</span><span class="o">:</span> <span class="nx">d</span><span class="p">.</span><span class="nx">dx0</span><span class="p">},</span> <span class="nx">d</span><span class="p">);</span></pre></div>
       </td>
     </tr>
-    <tr id='section-25'>
+    <tr id='section-26'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-25">&#182;</a>
+          <a class="pilcrow" href="#section-26">&#182;</a>
         </div>
         <p>the domain only gets updated once.</p>
       </td>
@@ -517,10 +539,10 @@ node <code>r</code> has a new position as well.</p>
 <span class="p">});</span></pre></div>
       </td>
     </tr>
-    <tr id='section-26'>
+    <tr id='section-27'>
       <td class=docs>
         <div class="pilwrap">
-          <a class="pilcrow" href="#section-26">&#182;</a>
+          <a class="pilcrow" href="#section-27">&#182;</a>
         </div>
         <p>This function splits the URL parameter string into a javascript hash.</p>
 

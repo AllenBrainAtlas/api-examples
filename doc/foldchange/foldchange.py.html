@@ -73,8 +73,8 @@ volumes on a per-structure basis.  </p>
 <span class="n">STRUCTURE_GRAPH_ID</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">REFERENCE_SPACE_ID</span> <span class="o">=</span> <span class="mi">10</span>
 
-<span class="n">STRUCTURES_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/OntologyNode/query.json?&quot;</span> <span class="o">+</span>\
-                      <span class="s">&quot;criteria=[structure_graph_id$eq</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">)</span> \
+<span class="n">STRUCTURES_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/Structure/query.json?&quot;</span> <span class="o">+</span>\
+                      <span class="s">&quot;criteria=[graph_id$eq</span><span class="si">%d</span><span class="s">]&quot;</span><span class="p">)</span> \
                       <span class="o">%</span> <span class="p">(</span><span class="n">API_DATA_PATH</span><span class="p">,</span> <span class="n">STRUCTURE_GRAPH_ID</span><span class="p">)</span>
 
 <span class="n">REFERENCE_SPACE_URL</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/ReferenceSpace/query.json?criteria=[id$eq</span><span class="si">%d</span><span class="s">]&quot;</span> <span class="o">+</span> \
@@ -209,13 +209,14 @@ StructureGraph model and use those to build a navigable tree hash.</p>
     
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">structures</span><span class="p">)):</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">structures</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id_path&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
         <span class="n">s</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">s</span><span class="p">[</span><span class="s">&#39;sum1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">s</span><span class="p">[</span><span class="s">&#39;volume1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">s</span><span class="p">[</span><span class="s">&#39;sum2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">s</span><span class="p">[</span><span class="s">&#39;volume2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="n">structureHash</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;structure_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">s</span></pre></div>
+        <span class="n">structureHash</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">s</span></pre></div>
       </td>
     </tr>
     <tr id='section-10'>

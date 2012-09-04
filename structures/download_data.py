@@ -30,8 +30,7 @@ import string
 # set of structures using the StructureSets table.  Only the `TOP_N` most 
 # correlated connections will be kept, approximately.
 
-#API_PATH = "http://api.brain-map.org/api/v2/data"
-API_PATH = "http://ibs-davidf-ux1:3000/api/v2/data"
+API_PATH = "http://api.brain-map.org/api/v2/data"
 GRAPH_ID = 1
 MOUSE_PRODUCT_ID = 1 # aba
 PLANE_ID = 1 # coronal

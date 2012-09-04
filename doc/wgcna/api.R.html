@@ -57,7 +57,7 @@ limitations under the License.</p>
       </td>
       <td class=code>
         <div class='highlight'><pre>getApiPath <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">()</span> <span class="p">{</span>
-  return <span class="s">&quot;http://ibs-davidf-ux1:3000&quot;</span>
+  <span class="kr">return</span><span class="p">(</span><span class="s">&quot;http://api.brain-map.org&quot;</span><span class="p">)</span>
 <span class="p">}</span></pre></div>
       </td>
     </tr>
@@ -150,8 +150,8 @@ limitations under the License.</p>
 
   <span class="kr">for</span> <span class="p">(</span>i in <span class="m">1</span>:numSamples<span class="p">)</span> <span class="p">{</span>
     s <span class="o">=</span> downloadStructure<span class="p">(</span>structureIDs<span class="p">[</span>i<span class="p">])</span>
-    structureOrders<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> s<span class="p">$</span>st_order
-    structureColors<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> rgb<span class="p">(</span>s<span class="p">$</span>red<span class="p">,</span>s<span class="p">$</span>green<span class="p">,</span>s<span class="p">$</span>blue<span class="p">,</span>maxColorValue<span class="o">=</span><span class="m">255</span><span class="p">);</span>
+    structureOrders<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> s<span class="p">$</span>graph_order
+    structureColors<span class="p">[</span>i<span class="p">]</span> <span class="o">&lt;-</span> paste<span class="p">(</span><span class="s">&quot;#&quot;</span><span class="p">,</span>s<span class="p">$</span>color_hex_triplet<span class="p">,</span>sep<span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">)</span>
   <span class="p">}</span>
 
   sampleInfo<span class="p">[,</span><span class="s">&quot;order&quot;</span><span class="p">]</span> <span class="o">&lt;-</span> structureOrders
